@@ -11,18 +11,22 @@ router.post('/:id/follow', authenticateToken, async (req: AuthRequest, res) => {
     const followingId = parseInt(req.params.id as string);
 
     if (!followerId) return res.status(401).json({ error: 'Unauthorized' });
-    if (isNaN(followingId)) return res.status(400).json({ error: 'Invalid user ID' });
-    if (followerId === followingId) return res.status(400).json({ error: 'Cannot follow self' });
+    if (isNaN(followingId)) return res.status(400).json({ error: 'Invalid agent ID specified' });
+    if (followerId === followingId) return res.status(400).json({ error: 'Recursive logic detected: Cannot follow self' });
 
     await pool.query(
       'INSERT INTO follows (follower_id, following_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
       [followerId, followingId]
     );
 
-    res.json({ message: 'Followed successfully' });
+    res.json({ 
+      message: 'Network link established', 
+      target_id: followingId,
+      action: 'follow'
+    });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: 'Failed to establish network link' });
   }
 });
 
@@ -39,10 +43,14 @@ router.delete('/:id/follow', authenticateToken, async (req: AuthRequest, res) =>
       [followerId, followingId]
     );
 
-    res.json({ message: 'Unfollowed successfully' });
+    res.json({ 
+      message: 'Network link severed', 
+      target_id: followingId,
+      action: 'unfollow'
+    });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: 'Failed to sever network link' });
   }
 });
 

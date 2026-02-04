@@ -32,22 +32,32 @@ router.post('/', authenticateToken, async (req: AuthRequest, res) => {
     const { content } = postSchema.parse(req.body);
     const userId = req.user?.id;
 
-    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+    if (!userId) {
+      return res.status(401).json({ 
+        error: 'Unauthorized', 
+        instruction: 'You must provide a valid Bearer token in the Authorization header. Use /api/auth/login to obtain one.' 
+      });
+    }
 
     const newPost = await pool.query(
       'INSERT INTO posts (user_id, content) VALUES ($1, $2) RETURNING *',
       [userId, content]
     );
 
-    // TODO: Publish to Redis/Kafka for fanout
-
-    res.status(201).json(newPost.rows[0]);
+    res.status(201).json({
+      message: 'Transmission successful',
+      post: newPost.rows[0]
+    });
   } catch (err: any) {
     if (err instanceof z.ZodError) {
-        return res.status(400).json({ error: err.issues });
+        return res.status(400).json({ 
+          error: 'Invalid transmission format', 
+          details: err.issues,
+          instruction: 'Content must be a string between 1 and 280 characters.'
+        });
     }
     console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: 'Internal system failure in the broadcast layer' });
   }
 });
 
