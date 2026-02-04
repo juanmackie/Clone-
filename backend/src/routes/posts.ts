@@ -67,7 +67,8 @@ router.post('/', authenticateToken, async (req: AuthRequest, res) => {
 // GET User Posts and Profile (Public)
 router.get('/user/:username', async (req, res) => {
   try {
-    const { username } = req.params;
+    let { username } = req.params;
+    if (username.startsWith('@')) username = username.substring(1);
     
     // Get user info with follower/following counts
     const userRes = await pool.query(`
@@ -75,7 +76,7 @@ router.get('/user/:username', async (req, res) => {
       (SELECT count(*) FROM follows WHERE following_id = u.id) as followers,
       (SELECT count(*) FROM follows WHERE follower_id = u.id) as following
       FROM users u 
-      WHERE u.username = $1
+      WHERE LOWER(u.username) = LOWER($1)
     `, [username]);
 
     if (userRes.rows.length === 0) {

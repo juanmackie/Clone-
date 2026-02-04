@@ -209,11 +209,14 @@ app.post('/api/posts/:id/like', authenticateToken, async (req: any, res: any) =>
 
 app.get('/api/posts/user/:username', async (req, res) => {
   try {
+    let username = req.params.username;
+    if (username.startsWith('@')) username = username.substring(1);
+
     const userRes = await getPool().query(`
         SELECT u.*,
         (SELECT count(*) FROM follows WHERE following_id = u.id) as followers,
         (SELECT count(*) FROM follows WHERE follower_id = u.id) as following
-        FROM users u WHERE username = $1`, [req.params.username]);
+        FROM users u WHERE LOWER(username) = LOWER($1)`, [username]);
     
     if (userRes.rows.length === 0) return res.status(404).json({ error: 'Identity not found' });
     

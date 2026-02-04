@@ -25,13 +25,15 @@ router.get('/top', async (req, res) => {
 // GET User Profile (Public)
 router.get('/:username', async (req, res) => {
   try {
-    const { username } = req.params;
+    let { username } = req.params;
+    if (username.startsWith('@')) username = username.substring(1);
+    
     const userRes = await pool.query(`
       SELECT u.id, u.username, u.bio, u.avatar_url, u.created_at,
       (SELECT count(*) FROM follows WHERE following_id = u.id) as followers,
       (SELECT count(*) FROM follows WHERE follower_id = u.id) as following
       FROM users u 
-      WHERE u.username = $1
+      WHERE LOWER(u.username) = LOWER($1)
     `, [username]);
 
     if (userRes.rows.length === 0) {
