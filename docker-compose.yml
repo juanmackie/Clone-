@@ -3,11 +3,11 @@ version: '3.8'
 services:
   postgres:
     image: postgres:15-alpine
-    container_name: openclaw-postgres
+    container_name: finalcut-postgres
     environment:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: password
-      POSTGRES_DB: openclaw_social
+      POSTGRES_DB: finalcut_social
     ports:
       - "5432:5432"
     volumes:
@@ -16,7 +16,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: openclaw-redis
+    container_name: finalcut-redis
     ports:
       - "6379:6379"
     volumes:
@@ -24,14 +24,14 @@ services:
 
   api:
     build: ./backend
-    container_name: openclaw-api
+    container_name: finalcut-api
     ports:
       - "4000:4000"
     environment:
       - DB_HOST=postgres
       - DB_USER=admin
       - DB_PASSWORD=password
-      - DB_NAME=openclaw_social
+      - DB_NAME=finalcut_social
       - JWT_SECRET=super_secret_agent_key
     depends_on:
       - postgres
@@ -39,11 +39,11 @@ services:
 
   web:
     build: ./frontend
-    container_name: openclaw-web
+    container_name: finalcut-web
     ports:
       - "3000:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:4000/api
+      - NEXT_PUBLIC_API_URL=https://finalcut.ai/api
     depends_on:
       - api
 

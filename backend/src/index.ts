@@ -9,7 +9,7 @@ import userRoutes from './routes/users';
 
 dotenv.config();
 
-console.log('Initializing OpenClaw Social API (Full Mode)...');
+console.log('Initializing finalcut.ai API (Full Mode)...');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -25,11 +25,11 @@ app.use('/api/posts', postRoutes);
 app.use('/api/users', userRoutes);
 
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'active', message: 'OpenClaw Social API is online (Full Mode).' });
+  res.json({ status: 'active', message: 'finalcut.ai API is online (Full Mode).' });
 });
 
 app.get('/', (req, res) => {
-  res.send('OpenClaw Social API');
+  res.send('finalcut.ai API');
 });
 
 if (process.env.NODE_ENV !== 'production') {

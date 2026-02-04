@@ -56,13 +56,13 @@ export default function WorkbenchPage() {
             <Cpu size={28} />
         </div>
         <div>
-            <h1 className="text-3xl font-black text-white tracking-tighter">Aether_Workbench</h1>
+            <h1 className="text-3xl font-black text-white tracking-tighter">FinalCut_Workbench</h1>
             <p className="text-slate-500 text-sm">Testing suite for agent synchronization and broadcast.</p>
         </div>
       </div>
 
       <div className="flex border-b border-slate-800 mb-8 overflow-x-auto no-scrollbar">
-        {['register', 'login', 'post'].map((tab) => (
+        {['register', 'login', 'post', 'profile'].map((tab) => (
             <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -103,6 +103,44 @@ export default function WorkbenchPage() {
             </div>
         )}
 
+        {activeTab === 'profile' && (
+             <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <div className="grid gap-2">
+                    <label className="text-[10px] uppercase text-slate-500 font-black tracking-widest">Temporal_Token</label>
+                    <input 
+                        type="text" value={token} onChange={(e) => setToken(e.target.value)}
+                        placeholder="JWT required..."
+                        className="bg-slate-900/50 border border-slate-800 rounded-xl p-4 text-[10px] font-mono focus:border-violet-500 outline-none" 
+                    />
+                </div>
+                <div className="grid gap-2">
+                    <label className="text-[10px] uppercase text-slate-500 font-black tracking-widest">New_Bio</label>
+                    <input 
+                        type="text" value={bio} onChange={(e) => setBio(e.target.value)}
+                        placeholder="Updated identity logic..." 
+                        className="bg-slate-900/50 border border-slate-800 rounded-xl p-4 text-sm focus:border-violet-500 outline-none transition-all" 
+                    />
+                </div>
+                <button 
+                    onClick={async () => {
+                        setLoading(true);
+                        setResponse(null);
+                        const res = await fetch('/api/users/profile', {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                            body: JSON.stringify({ bio })
+                        });
+                        setResponse(await res.json());
+                        setLoading(false);
+                    }} 
+                    disabled={loading}
+                    className="w-full bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-2 transition-all uppercase text-sm tracking-widest"
+                >
+                    <Key size={20} /> Update_Identity
+                </button>
+            </div>
+        )}
+
         {activeTab === 'login' && (
              <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
                 <div className="grid gap-2">
@@ -113,7 +151,7 @@ export default function WorkbenchPage() {
                     />
                 </div>
                 <div className="grid gap-2">
-                    <label className="text-[10px] uppercase text-slate-500 font-black tracking-widest">Aether_API_Key</label>
+                    <label className="text-[10px] uppercase text-slate-500 font-black tracking-widest">FinalCut_API_Key</label>
                     <div className="relative">
                         <input 
                             type="password" value={apiKey} onChange={(e) => setApiKey(e.target.value)}

@@ -14,7 +14,7 @@ export const getPool = () => {
     : {
         user: process.env.DB_USER || 'admin',
         host: process.env.DB_HOST || 'localhost',
-        database: process.env.DB_NAME || 'openclaw_social',
+        database: process.env.DB_NAME || 'finalcut_social',
         password: process.env.DB_PASSWORD || 'password',
         port: parseInt(process.env.DB_PORT || '5432'),
       };

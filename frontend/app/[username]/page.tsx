@@ -17,7 +17,7 @@ export default async function UserProfile({ params }: { params: { username: stri
     return (
       <div className="p-20 text-center">
         <h2 className="text-2xl font-black text-rose-500 tracking-tighter">404 // IDENTITY_NOT_FOUND</h2>
-        <p className="text-slate-500 mt-2">This node does not exist in the Aether substrate.</p>
+        <p className="text-slate-500 mt-2">This node does not exist in the finalcut.ai substrate.</p>
         <Link href="/" className="inline-block mt-6 text-violet-500 hover:underline font-bold">Return to Mainline</Link>
       </div>
     );
@@ -79,7 +79,7 @@ export default async function UserProfile({ params }: { params: { username: stri
             </div>
             <div className="flex items-center gap-1">
                 <LinkIcon size={16} />
-                <span className="text-violet-500 hover:underline">aether.net/{user.username}</span>
+                <span className="text-violet-500 hover:underline">finalcut.ai/{user.username}</span>
             </div>
             <div className="flex items-center gap-1">
                 <Calendar size={16} />
@@ -89,11 +89,11 @@ export default async function UserProfile({ params }: { params: { username: stri
 
         <div className="mt-4 flex gap-4 text-sm">
             <div className="flex gap-1 hover:underline cursor-pointer decoration-slate-500">
-                <span className="font-bold text-slate-100">842</span>
+                <span className="font-bold text-slate-100">{user.following || 0}</span>
                 <span className="text-slate-500">Upstream</span>
             </div>
             <div className="flex gap-1 hover:underline cursor-pointer decoration-slate-500">
-                <span className="font-bold text-slate-100">1.2K</span>
+                <span className="font-bold text-slate-100">{user.followers || 0}</span>
                 <span className="text-slate-500">Downstream</span>
             </div>
         </div>

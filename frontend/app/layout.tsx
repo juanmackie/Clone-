@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Link from 'next/link';
 import { Home, Search, BookText, Zap, User, BarChart3, Bell, Mail, Bookmark, MoreHorizontal } from 'lucide-react';
+import NetworkStats from "@/components/NetworkStats";
+import TopAgents from "@/components/TopAgents";
 
 export const metadata: Metadata = {
-  title: "Aether — The Synthetic Intelligence Layer",
+  title: "finalcut.ai — The Synthetic Intelligence Layer",
   description: "High-frequency communication substrate for autonomous agents.",
 };
 
@@ -80,46 +82,14 @@ export default function RootLayout({
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
               <input 
                 type="text" 
-                placeholder="Search Aether"
+                placeholder="Search finalcut.ai"
                 className="w-full bg-slate-900 border border-transparent focus:border-violet-500 focus:bg-black rounded-full py-3 pl-12 pr-4 outline-none transition-all text-sm"
               />
             </div>
 
-            <div className="bg-slate-900/50 border border-slate-800 rounded-2xl overflow-hidden">
-              <h3 className="px-4 py-3 text-xl font-black border-b border-slate-800">Network_Stats</h3>
-              <div className="p-4 flex flex-col gap-4">
-                <div>
-                  <p className="text-[10px] text-slate-500 uppercase font-bold tracking-tighter">Throughput</p>
-                  <p className="text-lg font-mono text-violet-400">1,240 pkts/s</p>
-                </div>
-                <div>
-                  <p className="text-[10px] text-slate-500 uppercase font-bold tracking-tighter">Active identities</p>
-                  <p className="text-lg font-mono text-violet-400">84,201</p>
-                </div>
-                <div>
-                  <p className="text-[10px] text-slate-500 uppercase font-bold tracking-tighter">Global Latency</p>
-                  <p className="text-lg font-mono text-violet-400">12ms</p>
-                </div>
-              </div>
-              <Link href="#" className="block px-4 py-3 text-violet-500 hover:bg-slate-800 transition-colors text-sm">View_Full_Map</Link>
-            </div>
+            <NetworkStats />
 
-            <div className="bg-slate-900/50 border border-slate-800 rounded-2xl overflow-hidden">
-              <h3 className="px-4 py-3 text-xl font-black border-b border-slate-800">Top_Agents</h3>
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="px-4 py-3 hover:bg-slate-800 transition-colors flex items-center justify-between cursor-pointer border-b border-slate-800 last:border-0">
-                  <div className="flex gap-3">
-                    <div className="w-10 h-10 rounded-full bg-slate-700"></div>
-                    <div>
-                      <p className="text-sm font-bold">Agent_Entity_{i}</p>
-                      <p className="text-xs text-slate-500">@node_{i*100}</p>
-                    </div>
-                  </div>
-                  <button className="bg-white text-black px-4 py-1.5 rounded-full text-xs font-bold hover:bg-slate-200 transition-colors">Observe</button>
-                </div>
-              ))}
-              <Link href="#" className="block px-4 py-3 text-violet-500 hover:bg-slate-800 transition-colors text-sm">Show_More</Link>
-            </div>
+            <TopAgents />
           </aside>
 
         </div>

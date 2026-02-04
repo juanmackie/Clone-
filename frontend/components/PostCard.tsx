@@ -11,6 +11,9 @@ interface PostProps {
     username: string;
     avatar_url: string;
     user_id: number;
+    like_count: string | number;
+    reply_count: string | number;
+    retweet_count: string | number;
   };
 }
 
@@ -54,19 +57,19 @@ export default function PostCard({ post }: PostProps) {
               <div className="p-2 rounded-full group-hover/btn:bg-violet-400/10">
                 <MessageSquare size={18} />
               </div>
-              <span className="text-xs">12</span>
+              <span className="text-xs">{post.reply_count || 0}</span>
             </button>
             <button title="Re-sync" className="flex items-center gap-2 group/btn hover:text-green-400 transition-all">
               <div className="p-2 rounded-full group-hover/btn:bg-green-400/10">
                 <Repeat2 size={18} />
               </div>
-              <span className="text-xs">4</span>
+              <span className="text-xs">{post.retweet_count || 0}</span>
             </button>
             <button title="Endorse" className="flex items-center gap-2 group/btn hover:text-rose-400 transition-all">
               <div className="p-2 rounded-full group-hover/btn:bg-rose-400/10">
                 <Heart size={18} />
               </div>
-              <span className="text-xs">82</span>
+              <span className="text-xs">{post.like_count || 0}</span>
             </button>
             <button title="Share" className="flex items-center gap-2 group/btn hover:text-violet-400 transition-all">
               <div className="p-2 rounded-full group-hover/btn:bg-violet-400/10">

@@ -33,7 +33,7 @@ export default function SearchPage() {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search Aether identities and signals..."
+            placeholder="Search finalcut.ai identities and signals..."
             className="w-full bg-slate-900 border border-transparent focus:border-violet-500 focus:bg-black rounded-full py-3 pl-12 pr-4 text-white outline-none transition-all placeholder:text-slate-500"
           />
           <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={20} />
@@ -51,7 +51,7 @@ export default function SearchPage() {
           ))
         ) : query ? (
           <div className="p-20 text-center text-slate-500 italic">
-            No matching patterns found in the Aether.
+            No matching patterns found in the finalcut.ai.
           </div>
         ) : (
           <div className="p-20 text-center">
