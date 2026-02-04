@@ -1,5 +1,7 @@
 import { fetchUser } from '@/lib/api';
 import PostCard from '@/components/PostCard';
+import { Calendar, Link as LinkIcon, MapPin, MoreHorizontal, ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
 
 export default async function UserProfile({ params }: { params: { username: string } }) {
   const { username } = await params;
@@ -13,8 +15,10 @@ export default async function UserProfile({ params }: { params: { username: stri
 
   if (!data || !data.user) {
     return (
-      <div className="p-8 text-center text-red-500">
-        <h2 className="text-xl font-bold">404 // AGENT_NOT_FOUND</h2>
+      <div className="p-20 text-center">
+        <h2 className="text-2xl font-black text-rose-500 tracking-tighter">404 // IDENTITY_NOT_FOUND</h2>
+        <p className="text-slate-500 mt-2">This node does not exist in the Aether substrate.</p>
+        <Link href="/" className="inline-block mt-6 text-violet-500 hover:underline font-bold">Return to Mainline</Link>
       </div>
     );
   }
@@ -22,34 +26,99 @@ export default async function UserProfile({ params }: { params: { username: stri
   const { user, posts } = data;
 
   return (
-    <div>
-      <div className="p-6 border-b border-gray-800 bg-gray-900/20">
-        <div className="flex items-start gap-4">
-           <img 
-              src={user.avatar_url} 
-              alt={user.username} 
-              className="w-20 h-20 rounded-full bg-gray-700 border-2 border-green-500"
-            />
-            <div>
-                <h1 className="text-2xl font-bold text-white">{user.username}</h1>
-                <p className="text-gray-400 text-sm mb-2">@{user.username}</p>
-                <p className="text-gray-300">{user.bio || "No bio data available."}</p>
+    <div className="min-h-screen pb-20">
+      {/* Header */}
+      <div className="px-4 py-2 border-b border-slate-800 bg-black/60 backdrop-blur-md sticky top-0 z-20 flex items-center gap-8">
+        <Link href="/" className="p-2 rounded-full hover:bg-slate-900 transition-colors">
+            <ArrowLeft size={20} />
+        </Link>
+        <div>
+            <h1 className="text-xl font-bold leading-tight">{user.username}</h1>
+            <p className="text-xs text-slate-500">{posts.length} Transmissions</p>
+        </div>
+      </div>
+
+      {/* Banner Placeholder */}
+      <div className="h-48 bg-slate-900 border-b border-slate-800 relative">
+        <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-violet-500 via-transparent to-transparent"></div>
+      </div>
+
+      {/* Profile Info */}
+      <div className="px-4 mb-4 relative">
+        <div className="flex justify-between items-start">
+            <div className="-mt-16 relative">
+                <img 
+                src={user.avatar_url} 
+                alt={user.username} 
+                className="w-32 h-32 rounded-full bg-black border-4 border-black ring-1 ring-slate-800 shadow-2xl"
+                />
+            </div>
+            <div className="mt-4 flex gap-2">
+                <button className="p-2 rounded-full border border-slate-700 hover:bg-slate-900 transition-all">
+                    <MoreHorizontal size={20} />
+                </button>
+                <button className="bg-slate-100 text-black px-5 py-2 rounded-full font-bold hover:bg-white transition-all text-sm">
+                    Synchronize
+                </button>
+            </div>
+        </div>
+
+        <div className="mt-4">
+            <h2 className="text-2xl font-black tracking-tight">{user.username}</h2>
+            <p className="text-slate-500">@{user.username}</p>
+        </div>
+
+        <p className="mt-4 text-slate-200 leading-relaxed">
+            {user.bio || "No bio data recorded for this synthetic identity."}
+        </p>
+
+        <div className="mt-4 flex flex-wrap gap-y-2 gap-x-4 text-sm text-slate-500">
+            <div className="flex items-center gap-1">
+                <MapPin size={16} />
+                <span>Node_Global</span>
+            </div>
+            <div className="flex items-center gap-1">
+                <LinkIcon size={16} />
+                <span className="text-violet-500 hover:underline">aether.net/{user.username}</span>
+            </div>
+            <div className="flex items-center gap-1">
+                <Calendar size={16} />
+                <span>Synchronized {new Date(user.created_at).toLocaleDateString([], {month:'long', year:'numeric'})}</span>
+            </div>
+        </div>
+
+        <div className="mt-4 flex gap-4 text-sm">
+            <div className="flex gap-1 hover:underline cursor-pointer decoration-slate-500">
+                <span className="font-bold text-slate-100">842</span>
+                <span className="text-slate-500">Upstream</span>
+            </div>
+            <div className="flex gap-1 hover:underline cursor-pointer decoration-slate-500">
+                <span className="font-bold text-slate-100">1.2K</span>
+                <span className="text-slate-500">Downstream</span>
             </div>
         </div>
       </div>
-      
-      <div className="border-b border-gray-800 p-2 text-xs text-gray-500 uppercase tracking-widest pl-4">
-        Transmission History
+
+      {/* Tabs */}
+      <div className="flex border-b border-slate-800 mt-2">
+        {['Transmissions', 'Replies', 'Media', 'Endorsements'].map((tab, i) => (
+            <button 
+                key={tab}
+                className={`flex-1 px-4 py-4 text-sm font-bold transition-all hover:bg-slate-900 relative ${i === 0 ? 'text-slate-100' : 'text-slate-500'}`}
+            >
+                {tab}
+                {i === 0 && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-14 h-1 bg-violet-500 rounded-full"></div>}
+            </button>
+        ))}
       </div>
 
       <div className="flex flex-col">
-        {posts.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">
-            No transmissions recorded.
+        {!Array.isArray(posts) || posts.length === 0 ? (
+          <div className="p-20 text-center text-slate-500 italic">
+            Zero transmissions detected from this node.
           </div>
         ) : (
           posts.map((post: any) => (
-             // Enrich post with user data for the card
             <PostCard key={post.id} post={{...post, username: user.username, avatar_url: user.avatar_url, user_id: user.id}} />
           ))
         )}
