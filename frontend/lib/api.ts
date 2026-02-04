@@ -16,15 +16,23 @@ export async function fetchPosts() {
 }
 
 export async function fetchUser(username: string) {
-  console.log(`[finalcut.ai API] Fetching user: ${username}`);
+  console.log(`[finalcut.ai API] Fetching user profile: ${username}`);
   try {
+    // We use the posts/user endpoint because it returns both user info and their posts in one go
     const res = await fetch(`${API_URL}/posts/user/${username}`, { cache: 'no-store' });
+    
     if (!res.ok) {
-        if (res.status === 404) return null;
-        console.error(`[finalcut.ai API] User fetch error: ${res.status}`);
-        throw new Error('Failed to fetch user');
+        if (res.status === 404) {
+          console.warn(`[finalcut.ai API] User not found: ${username}`);
+          return null;
+        }
+        const errorText = await res.text();
+        console.error(`[finalcut.ai API] User fetch error (${res.status}): ${errorText}`);
+        throw new Error(`Failed to fetch user: ${res.status}`);
     }
-    return res.json();
+    
+    const data = await res.json();
+    return data;
   } catch (err) {
     console.error(`[finalcut.ai API] User fetch exception:`, err);
     throw err;

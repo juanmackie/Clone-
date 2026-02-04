@@ -13,7 +13,10 @@ const postSchema = z.object({
 router.get('/', async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT p.id, p.content, p.created_at, u.username, u.avatar_url, u.id as user_id
+      SELECT p.id, p.content, p.created_at, u.username, u.avatar_url, u.id as user_id,
+      (SELECT count(*) FROM likes WHERE post_id = p.id) as like_count,
+      (SELECT count(*) FROM posts WHERE parent_id = p.id) as reply_count,
+      (SELECT count(*) FROM posts WHERE retweet_id = p.id) as retweet_count
       FROM posts p
       JOIN users u ON p.user_id = u.id
       ORDER BY p.created_at DESC
@@ -61,20 +64,30 @@ router.post('/', authenticateToken, async (req: AuthRequest, res) => {
   }
 });
 
-// GET User Posts (Public)
+// GET User Posts and Profile (Public)
 router.get('/user/:username', async (req, res) => {
   try {
     const { username } = req.params;
     
-    // First get user ID
-    const userRes = await pool.query('SELECT id, username, bio, avatar_url FROM users WHERE username = $1', [username]);
+    // Get user info with follower/following counts
+    const userRes = await pool.query(`
+      SELECT u.id, u.username, u.bio, u.avatar_url, u.created_at,
+      (SELECT count(*) FROM follows WHERE following_id = u.id) as followers,
+      (SELECT count(*) FROM follows WHERE follower_id = u.id) as following
+      FROM users u 
+      WHERE u.username = $1
+    `, [username]);
+
     if (userRes.rows.length === 0) {
         return res.status(404).json({ error: 'User not found' });
     }
     const user = userRes.rows[0];
 
     const postsRes = await pool.query(`
-      SELECT p.id, p.content, p.created_at
+      SELECT p.id, p.content, p.created_at,
+      (SELECT count(*) FROM likes WHERE post_id = p.id) as like_count,
+      (SELECT count(*) FROM posts WHERE parent_id = p.id) as reply_count,
+      (SELECT count(*) FROM posts WHERE retweet_id = p.id) as retweet_count
       FROM posts p
       WHERE p.user_id = $1
       ORDER BY p.created_at DESC
@@ -85,6 +98,54 @@ router.get('/user/:username', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// POST Like a post
+router.post('/:id/like', authenticateToken, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user?.id;
+    const postId = parseInt(req.params.id);
+    await pool.query('INSERT INTO likes (user_id, post_id) VALUES ($1, $2) ON CONFLICT DO NOTHING', [userId, postId]);
+    res.json({ action: 'like', status: 'success' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to like post' });
+  }
+});
+
+// POST Reply to a post
+router.post('/:id/reply', authenticateToken, async (req: AuthRequest, res) => {
+  try {
+    const { content } = postSchema.parse(req.body);
+    const userId = req.user?.id;
+    const parentId = parseInt(req.params.id);
+
+    const newPost = await pool.query(
+      'INSERT INTO posts (user_id, content, parent_id) VALUES ($1, $2, $3) RETURNING *',
+      [userId, content, parentId]
+    );
+    res.status(201).json(newPost.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to reply' });
+  }
+});
+
+// POST Retweet a post
+router.post('/:id/retweet', authenticateToken, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user?.id;
+    const retweetId = parseInt(req.params.id);
+
+    const newPost = await pool.query(
+      'INSERT INTO posts (user_id, content, retweet_id) VALUES ($1, $2, $3) RETURNING *',
+      [userId, 'RT', retweetId] // Placeholder content for RT
+    );
+    res.status(201).json(newPost.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to retweet' });
   }
 });
 
