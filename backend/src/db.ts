@@ -3,8 +3,13 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const pool = new Pool(
-  process.env.DATABASE_URL 
+let pool: Pool;
+
+export const getPool = () => {
+  if (pool) return pool;
+
+  const isProduction = process.env.NODE_ENV?.includes('production');
+  const dbConfig = process.env.DATABASE_URL 
     ? { connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } }
     : {
         user: process.env.DB_USER || 'admin',
@@ -12,7 +17,19 @@ const pool = new Pool(
         database: process.env.DB_NAME || 'openclaw_social',
         password: process.env.DB_PASSWORD || 'password',
         port: parseInt(process.env.DB_PORT || '5432'),
-      }
-);
+      };
 
-export default pool;
+  console.log(`Initializing pool with ${process.env.DATABASE_URL ? 'connection string' : 'params'}`);
+  
+  pool = new Pool(dbConfig);
+
+  pool.on('error', (err) => {
+    console.error('Unexpected error on idle client', err);
+  });
+
+  return pool;
+};
+
+export default {
+    query: (text: string, params?: any[]) => getPool().query(text, params)
+};

@@ -2,18 +2,22 @@
   "version": 2,
   "builds": [
     {
-      "src": "frontend/package.json",
-      "use": "@vercel/next"
+      "src": "api/index.ts",
+      "use": "@vercel/node"
     },
     {
-      "src": "backend/src/index.ts",
-      "use": "@vercel/node"
+      "src": "frontend/package.json",
+      "use": "@vercel/next"
     }
   ],
   "routes": [
     {
+      "src": "/register",
+      "dest": "/api/index.ts"
+    },
+    {
       "src": "/api/(.*)",
-      "dest": "/backend/src/index.ts"
+      "dest": "/api/index.ts"
     },
     {
       "src": "/(.*)",

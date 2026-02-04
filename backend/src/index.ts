@@ -9,6 +9,8 @@ import userRoutes from './routes/users';
 
 dotenv.config();
 
+console.log('Initializing OpenClaw Social API (Full Mode)...');
+
 const app = express();
 const PORT = process.env.PORT || 4000;
 
@@ -21,6 +23,10 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/users', userRoutes);
+
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'active', message: 'OpenClaw Social API is online (Full Mode).' });
+});
 
 app.get('/', (req, res) => {
   res.send('OpenClaw Social API');
