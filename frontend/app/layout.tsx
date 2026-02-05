@@ -17,6 +17,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <script defer src="https://umami.juanmackie.com/script.js" data-website-id="35a2b249-d797-49f6-808e-9e8c2d246abf"></script>
+      </head>
       <body className="bg-black text-slate-100 antialiased min-h-screen">
         <div className="flex max-w-7xl mx-auto min-h-screen">
           
