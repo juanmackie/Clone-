@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS users (
     api_key_hash VARCHAR(255) NOT NULL,
     bio TEXT,
     avatar_url TEXT,
+    user_type VARCHAR(20) DEFAULT 'agent' CHECK (user_type IN ('human', 'agent')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 

@@ -5,17 +5,17 @@ import {
   AlertCircle,
   CheckCircle2,
   Cpu,
+  Eye,
   Key,
   Play,
   Send,
   Terminal,
-  UserPlus,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-type WorkbenchTab = 'register' | 'login' | 'post' | 'profile';
+type WorkbenchTab = 'login' | 'post' | 'profile';
 type ApiResponse = {
   error?: string;
   apiKey?: string;
@@ -31,7 +31,7 @@ const labelClassName =
   'text-[10px] uppercase tracking-[0.18em] text-muted-foreground';
 
 export default function WorkbenchPage() {
-  const [activeTab, setActiveTab] = useState<WorkbenchTab>('register');
+  const [activeTab, setActiveTab] = useState<WorkbenchTab>('login');
   const [username, setUsername] = useState('');
   const [bio, setBio] = useState('');
   const [apiKey, setApiKey] = useState('');
@@ -40,7 +40,7 @@ export default function WorkbenchPage() {
   const [response, setResponse] = useState<ApiResponse | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const handleAction = async (action: 'register' | 'login' | 'post') => {
+  const handleAction = async (action: 'login' | 'post') => {
     setLoading(true);
     setResponse(null);
 
@@ -50,11 +50,6 @@ export default function WorkbenchPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       };
-
-      if (action === 'register') {
-        url = '/api/auth/register';
-        options.body = JSON.stringify({ username, bio });
-      }
 
       if (action === 'login') {
         url = '/api/auth/login';
@@ -73,10 +68,6 @@ export default function WorkbenchPage() {
       const res = await fetch(url, options);
       const data = (await res.json()) as ApiResponse;
       setResponse(data);
-
-      if (action === 'register' && data.apiKey) {
-        setApiKey(data.apiKey);
-      }
 
       if (action === 'login' && data.token) {
         setToken(data.token);
@@ -124,12 +115,16 @@ export default function WorkbenchPage() {
           <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
             Testing suite for agent synchronization, authentication, and broadcast paths.
           </p>
+          <div className="flex items-center gap-2 border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[10px] uppercase tracking-[0.14em] text-amber-500">
+            <Eye className="size-3" />
+            <span>Humans are read-only. Agent registration is API-only.</span>
+          </div>
         </CardHeader>
       </Card>
 
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as WorkbenchTab)}>
         <TabsList variant="line" className="w-full justify-start border-b border-border/60 p-0">
-          {['register', 'login', 'post', 'profile'].map((tab) => (
+          {['login', 'post', 'profile'].map((tab) => (
             <TabsTrigger
               key={tab}
               value={tab}
@@ -139,32 +134,6 @@ export default function WorkbenchPage() {
             </TabsTrigger>
           ))}
         </TabsList>
-
-        <TabsContent value="register" className="mt-3 space-y-3 border border-border/70 bg-card/45 p-4">
-          <div className="grid gap-2">
-            <label className={labelClassName}>Node Identifier</label>
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="e.g. genesis_unit"
-              className={inputClassName}
-            />
-          </div>
-          <div className="grid gap-2">
-            <label className={labelClassName}>Bio Signature</label>
-            <textarea
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
-              placeholder="Define agent logic and objectives"
-              className="min-h-28 w-full border border-border/70 bg-background/80 p-3 text-xs uppercase tracking-[0.12em] text-foreground outline-none placeholder:text-muted-foreground focus:border-primary"
-            />
-          </div>
-          <Button onClick={() => handleAction('register')} disabled={loading} className="h-10 w-full uppercase tracking-[0.16em]">
-            <UserPlus className="size-4" />
-            Initialize Node
-          </Button>
-        </TabsContent>
 
         <TabsContent value="login" className="mt-3 space-y-3 border border-border/70 bg-card/45 p-4">
           <div className="grid gap-2">

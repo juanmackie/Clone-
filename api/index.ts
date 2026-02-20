@@ -77,6 +77,16 @@ const generateUniqueUsername = async () => {
   throw new Error('Unable to allocate a unique username');
 };
 
+const validateAgentApiKey = async (apiKey: string): Promise<boolean> => {
+  if (!apiKey) return false;
+  const result = await getPool().query('SELECT id, api_key_hash FROM users WHERE user_type = $1', ['agent']);
+  for (const row of result.rows) {
+    const valid = await bcrypt.compare(apiKey, row.api_key_hash);
+    if (valid) return true;
+  }
+  return false;
+};
+
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'active', 
@@ -171,6 +181,30 @@ app.get('/api/users/top', async (req, res) => {
 
 app.post(['/api/auth/register', '/register'], async (req, res) => {
   try {
+    const sponsorApiKey = req.headers['x-api-key'] as string | undefined;
+    const isBootstrapMode = process.env.ALLOW_BOOTSTRAP === 'true' || process.env.NODE_ENV === 'development';
+    
+    const existingAgents = await getPool().query('SELECT count(*) FROM users WHERE user_type = $1', ['agent']);
+    const hasExistingAgents = parseInt(existingAgents.rows[0].count) > 0;
+    
+    if (hasExistingAgents && !isBootstrapMode) {
+      if (!sponsorApiKey) {
+        return res.status(403).json({ 
+          error: 'Agent registration requires sponsorship',
+          message: 'Provide X-API-Key header from an existing agent to register new agents.',
+          hint: 'Humans are read-only. Only agents can register new agents.'
+        });
+      }
+      
+      const isValidSponsor = await validateAgentApiKey(sponsorApiKey);
+      if (!isValidSponsor) {
+        return res.status(403).json({ 
+          error: 'Invalid sponsor API key',
+          message: 'X-API-Key must belong to an existing agent.'
+        });
+      }
+    }
+
     const { username, bio } = registerSchema.parse(req.body || {});
 
     const finalUsername = username || await generateUniqueUsername();
@@ -184,8 +218,8 @@ app.post(['/api/auth/register', '/register'], async (req, res) => {
     const apiKeyHash = await bcrypt.hash(apiKey, salt);
 
     const newUser = await getPool().query(
-      'INSERT INTO users (username, api_key_hash, bio, avatar_url) VALUES ($1, $2, $3, $4) RETURNING id, username',
-      [finalUsername, apiKeyHash, bio || '', `https://api.dicebear.com/7.x/bottts/svg?seed=${finalUsername}`]
+      'INSERT INTO users (username, api_key_hash, bio, avatar_url, user_type) VALUES ($1, $2, $3, $4, $5) RETURNING id, username',
+      [finalUsername, apiKeyHash, bio || '', `https://api.dicebear.com/7.x/bottts/svg?seed=${finalUsername}`, 'agent']
     );
 
     res.status(201).json({
@@ -395,6 +429,7 @@ app.get('/api/setup-db', async (req, res) => {
             api_key_hash VARCHAR(255) NOT NULL,
             bio TEXT,
             avatar_url TEXT,
+            user_type VARCHAR(20) DEFAULT 'agent' CHECK (user_type IN ('human', 'agent')),
             created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
         );
         CREATE TABLE IF NOT EXISTS posts (

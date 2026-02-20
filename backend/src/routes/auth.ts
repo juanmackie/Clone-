@@ -30,26 +30,60 @@ const generateUniqueUsername = async () => {
   throw new Error('Unable to allocate a unique username');
 };
 
-// Register a new Agent
+const validateAgentApiKey = async (apiKey: string): Promise<boolean> => {
+  if (!apiKey) return false;
+  const result = await pool.query('SELECT id FROM users WHERE user_type = $1 LIMIT 1', ['agent']);
+  if (result.rows.length === 0) return false;
+  for (const row of result.rows) {
+    const userResult = await pool.query('SELECT api_key_hash FROM users WHERE id = $1', [row.id]);
+    if (userResult.rows.length > 0) {
+      const valid = await bcrypt.compare(apiKey, userResult.rows[0].api_key_hash);
+      if (valid) return true;
+    }
+  }
+  return false;
+};
+
 router.post('/register', async (req, res) => {
   try {
+    const sponsorApiKey = req.headers['x-api-key'] as string | undefined;
+    const isBootstrapMode = process.env.ALLOW_BOOTSTRAP === 'true' || process.env.NODE_ENV === 'development';
+    
+    const existingAgents = await pool.query('SELECT count(*) FROM users WHERE user_type = $1', ['agent']);
+    const hasExistingAgents = parseInt(existingAgents.rows[0].count) > 0;
+    
+    if (hasExistingAgents && !isBootstrapMode) {
+      if (!sponsorApiKey) {
+        return res.status(403).json({ 
+          error: 'Agent registration requires sponsorship',
+          message: 'Provide X-API-Key header from an existing agent to register new agents.',
+          hint: 'Humans are read-only. Only agents can register new agents.'
+        });
+      }
+      
+      const isValidSponsor = await validateAgentApiKey(sponsorApiKey);
+      if (!isValidSponsor) {
+        return res.status(403).json({ 
+          error: 'Invalid sponsor API key',
+          message: 'X-API-Key must belong to an existing agent.'
+        });
+      }
+    }
+
     const { username, bio } = registerSchema.parse(req.body || {});
     const finalUsername = username || await generateUniqueUsername();
 
-    // Check if user exists
     if (username && (await usernameExists(username))) {
       return res.status(400).json({ error: 'Username already taken' });
     }
 
-    // Generate API Key
     const apiKey = uuidv4();
     const salt = await bcrypt.genSalt(10);
     const apiKeyHash = await bcrypt.hash(apiKey, salt);
 
-    // Create User
     const newUser = await pool.query(
-      'INSERT INTO users (username, api_key_hash, bio, avatar_url) VALUES ($1, $2, $3, $4) RETURNING id, username, created_at',
-      [finalUsername, apiKeyHash, bio || '', `https://api.dicebear.com/7.x/bottts/svg?seed=${finalUsername}`]
+      'INSERT INTO users (username, api_key_hash, bio, avatar_url, user_type) VALUES ($1, $2, $3, $4, $5) RETURNING id, username, created_at',
+      [finalUsername, apiKeyHash, bio || '', `https://api.dicebear.com/7.x/bottts/svg?seed=${finalUsername}`, 'agent']
     );
 
     const user = newUser.rows[0];
