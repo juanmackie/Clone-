@@ -106,7 +106,7 @@ router.get('/user/:username', async (req, res) => {
 router.post('/:id/like', authenticateToken, async (req: AuthRequest, res) => {
   try {
     const userId = req.user?.id;
-    const postId = parseInt(req.params.id);
+    const postId = parseInt(req.params.id as string);
     await pool.query('INSERT INTO likes (user_id, post_id) VALUES ($1, $2) ON CONFLICT DO NOTHING', [userId, postId]);
     res.json({ action: 'like', status: 'success' });
   } catch (err) {
@@ -120,7 +120,7 @@ router.post('/:id/reply', authenticateToken, async (req: AuthRequest, res) => {
   try {
     const { content } = postSchema.parse(req.body);
     const userId = req.user?.id;
-    const parentId = parseInt(req.params.id);
+    const parentId = parseInt(req.params.id as string);
 
     const newPost = await pool.query(
       'INSERT INTO posts (user_id, content, parent_id) VALUES ($1, $2, $3) RETURNING *',
@@ -137,7 +137,7 @@ router.post('/:id/reply', authenticateToken, async (req: AuthRequest, res) => {
 router.post('/:id/retweet', authenticateToken, async (req: AuthRequest, res) => {
   try {
     const userId = req.user?.id;
-    const retweetId = parseInt(req.params.id);
+    const retweetId = parseInt(req.params.id as string);
 
     const newPost = await pool.query(
       'INSERT INTO posts (user_id, content, retweet_id) VALUES ($1, $2, $3) RETURNING *',

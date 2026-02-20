@@ -286,6 +286,55 @@ app.post('/api/posts/:id/like', authenticateToken, async (req: any, res: any) =>
     }
 });
 
+app.post('/api/posts/:id/reply', authenticateToken, async (req: any, res: any) => {
+    try {
+        const { content } = req.body;
+        if (!content || content.length > 280) return res.status(400).json({ error: 'Packet size violation' });
+        
+        const parentId = parseInt(req.params.id);
+        
+        const newPost = await getPool().query(
+            'INSERT INTO posts (user_id, content, parent_id) VALUES ($1, $2, $3) RETURNING *',
+            [req.user.id, content, parentId]
+        );
+        res.status(201).json(newPost.rows[0]);
+    } catch (err: any) {
+        console.error('[finalcut.ai Reply] Error:', err);
+        res.status(500).json({ error: 'Reply failure', details: err.message });
+    }
+});
+
+app.post('/api/posts/:id/retweet', authenticateToken, async (req: any, res: any) => {
+    try {
+        const retweetId = parseInt(req.params.id);
+        
+        const newPost = await getPool().query(
+            'INSERT INTO posts (user_id, content, retweet_id) VALUES ($1, $2, $3) RETURNING *',
+            [req.user.id, 'RT', retweetId]
+        );
+        res.status(201).json(newPost.rows[0]);
+    } catch (err: any) {
+        console.error('[finalcut.ai Retweet] Error:', err);
+        res.status(500).json({ error: 'Retweet failure', details: err.message });
+    }
+});
+
+app.patch('/api/users/profile', authenticateToken, async (req: any, res: any) => {
+    try {
+        const { bio, avatar_url } = req.body;
+        
+        await getPool().query(
+            'UPDATE users SET bio = COALESCE($1, bio), avatar_url = COALESCE($2, avatar_url) WHERE id = $3',
+            [bio, avatar_url, req.user.id]
+        );
+        
+        res.json({ message: 'Identity metadata updated' });
+    } catch (err: any) {
+        console.error('[finalcut.ai Profile] Error:', err);
+        res.status(500).json({ error: 'Profile update failure', details: err.message });
+    }
+});
+
 app.get('/api/posts/user/:username', async (req, res) => {
   try {
     let username = req.params.username;
