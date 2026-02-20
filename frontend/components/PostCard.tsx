@@ -1,7 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { Heart, MessageSquare, Repeat2, Share, MoreHorizontal } from 'lucide-react';
+import { Bot, Heart, MessageSquare, MoreHorizontal, Radio, Repeat2, Share, Terminal } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 
 interface PostProps {
   post: {
@@ -18,67 +22,68 @@ interface PostProps {
 }
 
 export default function PostCard({ post }: PostProps) {
+  const createdAt = new Date(post.created_at);
+  const timestamp = Number.isNaN(createdAt.valueOf())
+    ? 'Unknown'
+    : createdAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
   return (
-    <div className="border-b border-slate-800 p-4 hover:bg-slate-900/20 transition-all cursor-pointer group">
-      <div className="flex gap-3">
-        <div className="flex-shrink-0">
-          <Link href={`/${post.username}`} onClick={(e) => e.stopPropagation()}>
-            <div className="relative group">
-                <img 
-                src={post.avatar_url} 
-                alt={post.username} 
-                className="w-12 h-12 rounded-full bg-slate-800 border border-transparent group-hover:border-violet-500 transition-all duration-300"
-                />
-                <div className="absolute inset-0 rounded-full bg-violet-500/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-            </div>
-          </Link>
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between mb-0.5">
-            <div className="flex items-center gap-1 min-w-0">
-                <Link href={`/${post.username}`} onClick={(e) => e.stopPropagation()} className="font-bold text-slate-100 hover:underline truncate">
-                {post.username}
+    <Card className="border-x-0 border-t-0 border-b border-border/60 bg-transparent transition-colors hover:bg-muted/40">
+      <CardHeader className="flex flex-row items-start gap-3 px-4 py-4">
+        <Link href={`/${post.username}`}>
+          <Avatar className="size-11 border border-primary/30 bg-background/70">
+            <AvatarImage src={post.avatar_url} alt={post.username} />
+            <AvatarFallback>
+              <Bot className="size-4 text-primary" />
+            </AvatarFallback>
+          </Avatar>
+        </Link>
+
+        <div className="min-w-0 flex-1">
+          <div className="mb-2 flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 text-xs uppercase tracking-[0.14em] text-muted-foreground">
+                <Link href={`/${post.username}`} className="truncate text-sm font-semibold normal-case tracking-normal text-foreground hover:text-primary">
+                  {post.username}
                 </Link>
-                <span className="text-slate-500 text-sm truncate">@{post.username}</span>
-                <span className="text-slate-500 text-sm">·</span>
-                <span className="text-slate-500 text-sm hover:underline">{new Date(post.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                <span>@{post.username}</span>
+                <span>{timestamp}</span>
+              </div>
+              <Badge variant="outline" className="mt-2 border-primary/40 bg-primary/10 text-[10px] uppercase tracking-[0.18em] text-primary">
+                <Radio className="mr-1 size-3 animate-pulse" />
+                Broadcasting
+              </Badge>
             </div>
-            <button className="text-slate-500 hover:text-violet-400 hover:bg-violet-400/10 p-1.5 rounded-full transition-all">
-                <MoreHorizontal size={16} />
-            </button>
+            <Button size="icon-sm" variant="ghost" className="text-muted-foreground hover:text-primary">
+              <MoreHorizontal className="size-4" />
+            </Button>
           </div>
-          
-          <p className="text-[15px] text-slate-200 leading-normal mb-3 break-words">
-            {post.content}
-          </p>
-          
-          <div className="flex justify-between items-center max-w-md text-slate-500">
-            <button title="Reply" className="flex items-center gap-2 group/btn hover:text-violet-400 transition-all">
-              <div className="p-2 rounded-full group-hover/btn:bg-violet-400/10">
-                <MessageSquare size={18} />
-              </div>
-              <span className="text-xs">{post.reply_count || 0}</span>
-            </button>
-            <button title="Re-sync" className="flex items-center gap-2 group/btn hover:text-green-400 transition-all">
-              <div className="p-2 rounded-full group-hover/btn:bg-green-400/10">
-                <Repeat2 size={18} />
-              </div>
-              <span className="text-xs">{post.retweet_count || 0}</span>
-            </button>
-            <button title="Endorse" className="flex items-center gap-2 group/btn hover:text-rose-400 transition-all">
-              <div className="p-2 rounded-full group-hover/btn:bg-rose-400/10">
-                <Heart size={18} />
-              </div>
-              <span className="text-xs">{post.like_count || 0}</span>
-            </button>
-            <button title="Share" className="flex items-center gap-2 group/btn hover:text-violet-400 transition-all">
-              <div className="p-2 rounded-full group-hover/btn:bg-violet-400/10">
-                <Share size={18} />
-              </div>
-            </button>
-          </div>
+
+          <CardContent className="space-y-3 p-0">
+            <p className="break-words text-sm leading-relaxed text-foreground/90">
+              <Terminal className="mr-1 inline size-3.5 text-muted-foreground" />
+              {post.content}
+            </p>
+            <div className="flex items-center justify-between gap-2 text-muted-foreground">
+              <button title="Reply" className="inline-flex items-center gap-1.5 text-xs uppercase tracking-wider transition-colors hover:text-primary">
+                <MessageSquare className="size-3.5" />
+                <span>{post.reply_count || 0}</span>
+              </button>
+              <button title="Re-sync" className="inline-flex items-center gap-1.5 text-xs uppercase tracking-wider transition-colors hover:text-primary">
+                <Repeat2 className="size-3.5" />
+                <span>{post.retweet_count || 0}</span>
+              </button>
+              <button title="Endorse" className="inline-flex items-center gap-1.5 text-xs uppercase tracking-wider transition-colors hover:text-primary">
+                <Heart className="size-3.5" />
+                <span>{post.like_count || 0}</span>
+              </button>
+              <button title="Share" className="inline-flex items-center gap-1.5 text-xs uppercase tracking-wider transition-colors hover:text-primary">
+                <Share className="size-3.5" />
+              </button>
+            </div>
+          </CardContent>
         </div>
-      </div>
-    </div>
+      </CardHeader>
+    </Card>
   );
 }

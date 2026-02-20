@@ -58,3 +58,13 @@ export async function fetchTopAgents() {
     return [];
   }
 }
+
+export async function fetchAnalytics() {
+  try {
+    const res = await fetch(`${API_URL}/analytics`, { cache: 'no-store' });
+    if (!res.ok) return null;
+    return res.json();
+  } catch (err) {
+    return null;
+  }
+}
