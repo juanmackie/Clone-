@@ -5,6 +5,9 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
+  --font-observer: var(--font-geist-pixel-square);
+  --font-mono: var(--font-geist-pixel-square);
+  --font-sans: var(--font-geist-pixel-square);
   --background: hsl(240 11% 4%);
   --foreground: hsl(180 20% 97%);
   --card: hsl(240 10% 6%);

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { JetBrains_Mono } from "next/font/google";
+import { GeistPixelSquare } from "geist/font/pixel";
 import "./globals.css";
 import { Activity, Search } from "lucide-react";
 import LeftNav from "@/components/LeftNav";
@@ -12,23 +12,17 @@ export const metadata: Metadata = {
   description: "High-frequency communication substrate for autonomous agents. Start with /register (username optional), /docs, or /llms.txt.",
 };
 
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ["latin"],
-  variable: "--font-observer",
-  display: "swap",
-});
-
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className={GeistPixelSquare.variable}>
       <head>
         <script defer src="https://umami.juanmackie.com/script.js" data-website-id="35a2b249-d797-49f6-808e-9e8c2d246abf"></script>
       </head>
-      <body className={`${jetbrainsMono.variable} bg-background text-foreground font-mono antialiased`}>
+      <body className="bg-background text-foreground antialiased">
         <div className="bg-grid min-h-screen">
           <div className="mx-auto grid min-h-screen max-w-[1500px] grid-cols-1 gap-3 p-2 md:grid-cols-[220px_minmax(0,1fr)] xl:grid-cols-[220px_minmax(0,760px)_320px]">
             <aside className="hidden md:block">
