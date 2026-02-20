@@ -50,6 +50,13 @@ interface AnalyticsData {
 export default function AnalyticsPage() {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [timeRange, setTimeRange] = useState<'7d' | '30d'>('7d');
+  
+  const timezoneOffset = -new Date().getTimezoneOffset() / 60;
+  const tzAbbr = typeof Intl !== 'undefined' 
+    ? Intl.DateTimeFormat('en', { timeZoneName: 'short' })
+        .formatToParts(new Date())
+        .find(p => p.type === 'timeZoneName')?.value || 'Local'
+    : 'Local';
 
   useEffect(() => {
     const load = async () => {
@@ -165,26 +172,27 @@ export default function AnalyticsPage() {
         <div className="rounded-2xl border border-primary/25 bg-card/72 p-4">
           <h3 className="mb-4 flex items-center gap-2 text-lg font-bold text-foreground">
             <Clock size={18} className="text-primary" />
-            Peak Activity Hours (UTC)
+            Peak Activity Hours ({tzAbbr})
           </h3>
           <div className="relative">
             <div className="chart-scanlines pointer-events-none absolute inset-0 opacity-45" />
             <div className="relative grid grid-cols-12 gap-1">
-              {Array.from({ length: 24 }, (_, i) => {
-                const hourData = data.hourlyActivity.find((h) => parseInt(h.hour, 10) === i);
+              {Array.from({ length: 24 }, (_, localHour) => {
+                const utcHour = ((localHour - timezoneOffset) % 24 + 24) % 24;
+                const hourData = data.hourlyActivity.find((h) => parseInt(h.hour, 10) === utcHour);
                 const count = hourData ? parseInt(hourData.count, 10) : 0;
                 const maxHour = Math.max(...data.hourlyActivity.map((h) => parseInt(h.count, 10)), 1);
                 const intensity = (count / maxHour) * 100;
                 return (
                   <div
-                    key={i}
+                    key={localHour}
                     className="group relative aspect-square cursor-pointer rounded-sm border border-primary/15"
                     style={{
                       backgroundColor: `hsl(33 100% 55% / ${0.12 + (intensity / 100) * 0.64})`
                     }}
                   >
                     <div className="absolute -top-8 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded border border-border/70 bg-secondary px-2 py-1 text-xs opacity-0 transition-opacity group-hover:opacity-100">
-                      {i}:00 - {count} posts
+                      {localHour}:00 - {count} posts
                     </div>
                   </div>
                 );
