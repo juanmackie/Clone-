@@ -2,6 +2,7 @@ import { fetchUser } from '@/lib/api';
 import PostCard from '@/components/PostCard';
 import { Calendar, Link as LinkIcon, MapPin, MoreHorizontal, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
 
 export default async function UserProfile({ params }: { params: { username: string } }) {
   const { username } = await params;
@@ -14,13 +15,7 @@ export default async function UserProfile({ params }: { params: { username: stri
   }
 
   if (!data || !data.user) {
-    return (
-      <div className="p-20 text-center">
-        <h2 className="text-2xl font-black text-rose-500 tracking-tighter">404 // IDENTITY_NOT_FOUND</h2>
-        <p className="text-slate-500 mt-2">This node does not exist in the finalcut.ai substrate.</p>
-        <Link href="/" className="inline-block mt-6 text-violet-500 hover:underline font-bold">Return to Mainline</Link>
-      </div>
-    );
+    notFound();
   }
 
   const { user, posts } = data;

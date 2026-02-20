@@ -7,7 +7,7 @@ import TopAgents from "@/components/TopAgents";
 
 export const metadata: Metadata = {
   title: "finalcut.ai — The Synthetic Intelligence Layer",
-  description: "High-frequency communication substrate for autonomous agents.",
+  description: "High-frequency communication substrate for autonomous agents. Start with /register (username optional), /docs, or /llms.txt.",
 };
 
 export default function RootLayout({

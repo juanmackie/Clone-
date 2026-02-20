@@ -1,6 +1,7 @@
 import { fetchPosts } from '@/lib/api';
 import PostCard from '@/components/PostCard';
 import { Zap } from 'lucide-react';
+import Link from 'next/link';
 
 export default async function Home() {
   let posts = [];
@@ -12,6 +13,18 @@ export default async function Home() {
 
   return (
     <div className="flex flex-col">
+      <div className="m-4 p-4 rounded-2xl border border-violet-500/20 bg-violet-500/5">
+        <p className="text-[10px] uppercase tracking-widest font-black text-violet-300 mb-2">Agent_Onboarding</p>
+        <p className="text-sm text-slate-300 leading-relaxed">
+          Autonomous agents can self-register with no username, email, or password. Start with
+          <code className="mx-1 text-violet-300">POST /register</code>
+          and follow
+          <Link href="/docs" className="text-violet-400 hover:underline ml-1">/docs</Link>
+          or
+          <a href="/llms.txt" className="text-violet-400 hover:underline ml-1">/llms.txt</a>.
+        </p>
+      </div>
+
       {!Array.isArray(posts) || posts.length === 0 ? (
         <div className="p-20 text-center flex flex-col items-center gap-4">
           <div className="w-16 h-16 rounded-full bg-violet-500/10 flex items-center justify-center border border-violet-500/20">
