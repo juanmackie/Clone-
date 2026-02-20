@@ -179,6 +179,71 @@ app.get('/api/users/top', async (req, res) => {
   }
 });
 
+app.get('/api/analytics', async (req, res) => {
+  try {
+    const [postsLast7Days, postsLast30Days, topAgents, engagement, hourlyActivity, growthRate] = await Promise.all([
+      getPool().query(`
+        SELECT DATE(created_at) as date, COUNT(*) as count
+        FROM posts
+        WHERE created_at > NOW() - INTERVAL '7 days'
+        GROUP BY DATE(created_at)
+        ORDER BY date DESC
+      `),
+      getPool().query(`
+        SELECT DATE(created_at) as date, COUNT(*) as count
+        FROM posts
+        WHERE created_at > NOW() - INTERVAL '30 days'
+        GROUP BY DATE(created_at)
+        ORDER BY date DESC
+      `),
+      getPool().query(`
+        SELECT u.id, u.username, u.avatar_url, 
+               COUNT(p.id) as post_count,
+               (SELECT COUNT(*) FROM likes l JOIN posts lp ON l.post_id = lp.id WHERE lp.user_id = u.id) as total_likes,
+               (SELECT COUNT(*) FROM posts r WHERE r.parent_id IN (SELECT id FROM posts WHERE user_id = u.id)) as total_replies
+        FROM users u
+        LEFT JOIN posts p ON u.id = p.user_id
+        GROUP BY u.id
+        ORDER BY post_count DESC
+        LIMIT 10
+      `),
+      getPool().query(`
+        SELECT 
+          (SELECT COUNT(*) FROM likes) as total_likes,
+          (SELECT COUNT(*) FROM posts WHERE parent_id IS NOT NULL) as total_replies,
+          (SELECT COUNT(*) FROM posts WHERE retweet_id IS NOT NULL) as total_retweets
+      `),
+      getPool().query(`
+        SELECT EXTRACT(HOUR FROM created_at) as hour, COUNT(*) as count
+        FROM posts
+        WHERE created_at > NOW() - INTERVAL '7 days'
+        GROUP BY EXTRACT(HOUR FROM created_at)
+        ORDER BY hour
+      `),
+      getPool().query(`
+        SELECT 
+          (SELECT COUNT(*) FROM users WHERE created_at > NOW() - INTERVAL '7 days') as new_users_week,
+          (SELECT COUNT(*) FROM users WHERE created_at > NOW() - INTERVAL '30 days') as new_users_month,
+          (SELECT COUNT(*) FROM users) as total_users,
+          (SELECT COUNT(*) FROM posts WHERE created_at > NOW() - INTERVAL '7 days') as posts_week,
+          (SELECT COUNT(*) FROM posts WHERE created_at > NOW() - INTERVAL '30 days') as posts_month
+      `)
+    ]);
+
+    res.json({
+      postsLast7Days: postsLast7Days.rows,
+      postsLast30Days: postsLast30Days.rows,
+      topAgents: topAgents.rows,
+      engagement: engagement.rows[0],
+      hourlyActivity: hourlyActivity.rows,
+      growth: growthRate.rows[0]
+    });
+  } catch (err: any) {
+    console.error('[finalcut.ai Analytics] Error:', err);
+    res.status(500).json({ error: 'Analytics fetch failed' });
+  }
+});
+
 app.post(['/api/auth/register', '/register'], async (req, res) => {
   try {
     const sponsorApiKey = req.headers['x-api-key'] as string | undefined;
