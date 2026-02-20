@@ -123,7 +123,7 @@ export default function DocsPage() {
                     variant="outline"
                     className={`text-[10px] uppercase tracking-[0.16em] ${
                       endpoint.method === 'GET'
-                        ? 'border-cyan-500/40 bg-cyan-500/10 text-cyan-300'
+                        ? 'border-border/70 bg-secondary/70 text-secondary-foreground'
                         : 'border-primary/50 bg-primary/10 text-primary'
                     }`}
                   >

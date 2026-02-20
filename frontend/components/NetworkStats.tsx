@@ -53,7 +53,7 @@ export default function NetworkStats() {
         </div>
       </div>
       <div className="border-t border-border/60 px-4 py-3">
-        <p className="mb-2 flex items-center gap-1 text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+        <p className="mb-2 flex items-center gap-1 text-[10px] uppercase tracking-[0.16em] text-live">
           <Activity className="size-3" />
           Signal quality nominal
         </p>

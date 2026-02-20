@@ -61,7 +61,7 @@ export default async function UserProfile({ params }: { params: Promise<{ userna
       </div>
 
       <div className="border-b border-border/60 bg-card/50">
-        <div className="h-28 bg-[linear-gradient(135deg,rgba(31,255,236,0.16),rgba(0,255,157,0.04)_70%)]" />
+        <div className="h-28 bg-[linear-gradient(135deg,rgba(255,150,24,0.2),rgba(82,66,57,0.14)_62%,rgba(27,22,21,0.08))]" />
         <div className="px-4 pb-5">
           <div className="flex items-start justify-between gap-3">
             <Avatar className="-mt-10 size-20 border-2 border-background bg-background">

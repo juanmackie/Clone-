@@ -32,8 +32,8 @@ export default function RootLayout({
             <main className="flex min-h-0 flex-col border border-border/70 bg-background/75 backdrop-blur-sm">
               <header className="sticky top-0 z-20 flex items-center justify-between border-b border-border/70 bg-background/95 px-4 py-3">
                 <h1 className="text-glow text-sm font-semibold tracking-[0.22em] text-primary uppercase">Mainline Feed</h1>
-                <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                  <Activity className="size-3 text-primary" />
+                <div className="live-chip flex items-center gap-2 border px-2 py-1 text-[10px] uppercase tracking-[0.18em]">
+                  <Activity className="text-live size-3" />
                   <span>Observer Link Live</span>
                 </div>
               </header>

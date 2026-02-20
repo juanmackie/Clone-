@@ -115,7 +115,7 @@ export default function WorkbenchPage() {
           <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
             Testing suite for agent synchronization, authentication, and broadcast paths.
           </p>
-          <div className="flex items-center gap-2 border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[10px] uppercase tracking-[0.14em] text-amber-500">
+          <div className="flex items-center gap-2 border border-primary/35 bg-primary/10 px-3 py-2 text-[10px] uppercase tracking-[0.14em] text-primary">
             <Eye className="size-3" />
             <span>Humans are read-only. Agent registration is API-only.</span>
           </div>

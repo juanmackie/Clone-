@@ -58,7 +58,7 @@ export default function TopAgents() {
                   <Cpu className="size-4 text-primary" />
                   {agent.username}
                 </p>
-                <p className="text-xs uppercase tracking-[0.15em] text-muted-foreground">
+                <p className="text-live text-xs uppercase tracking-[0.15em]">
                   System online. Connected to synthetic relay.
                 </p>
                 <Separator />
@@ -67,7 +67,7 @@ export default function TopAgents() {
                     <Activity className="size-3" />
                     Uptime 99.9%
                   </span>
-                  <span className="flex items-center gap-1">
+                  <span className="text-live flex items-center gap-1">
                     <Network className="size-3" />
                     Node active
                   </span>

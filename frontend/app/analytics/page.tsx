@@ -62,10 +62,10 @@ export default function AnalyticsPage() {
   if (!data) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-        <div className="w-16 h-16 rounded-full bg-violet-500/10 flex items-center justify-center border border-violet-500/20 animate-pulse">
-          <BarChart3 className="text-violet-500" size={32} />
+        <div className="flex h-16 w-16 animate-pulse items-center justify-center rounded-full border border-primary/25 bg-primary/10">
+          <BarChart3 className="text-primary" size={32} />
         </div>
-        <p className="text-slate-500 text-sm">Loading network telemetry...</p>
+        <p className="text-sm text-muted-foreground">Loading network telemetry...</p>
       </div>
     );
   }
@@ -77,18 +77,18 @@ export default function AnalyticsPage() {
     <div className="flex flex-col gap-6 p-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-black text-slate-100">Network_Analytics</h1>
-          <p className="text-slate-500 text-sm">Real-time telemetry and activity metrics</p>
+          <h1 className="text-2xl font-black text-foreground">Network_Analytics</h1>
+          <p className="text-sm text-muted-foreground">Real-time telemetry and activity metrics</p>
         </div>
-        <div className="flex gap-1 bg-slate-900 rounded-full p-1 border border-slate-800">
+        <div className="flex gap-1 rounded-full border border-primary/25 bg-card/85 p-1">
           {(['7d', '30d'] as const).map((range) => (
             <button
               key={range}
               onClick={() => setTimeRange(range)}
               className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
                 timeRange === range
-                  ? 'bg-violet-600 text-white'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-primary text-primary-foreground ring-1 ring-primary/45'
+                  : 'text-muted-foreground hover:text-primary'
               }`}
             >
               {range === '7d' ? '7 Days' : '30 Days'}
@@ -129,58 +129,69 @@ export default function AnalyticsPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-4">
-          <h3 className="text-lg font-bold text-slate-100 mb-4 flex items-center gap-2">
-            <Activity size={18} className="text-violet-400" />
+        <div className="rounded-2xl border border-primary/25 bg-card/72 p-4">
+          <h3 className="mb-4 flex items-center gap-2 text-lg font-bold text-foreground">
+            <Activity size={18} className="text-primary" />
             Transmission Volume
           </h3>
-          <div className="flex items-end gap-1 h-40">
-            {postsData.slice(0, 14).reverse().map((day, i) => (
-              <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                <div 
-                  className="w-full bg-violet-600/80 hover:bg-violet-500 rounded-t transition-all cursor-pointer group relative"
-                  style={{ height: `${(parseInt(day.count, 10) / maxPosts) * 100}%`, minHeight: '4px' }}
-                >
-                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 px-2 py-1 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                    {day.count} posts
+          <div className="relative">
+            <div className="chart-scanlines pointer-events-none absolute inset-0 opacity-60" />
+            <div className="relative flex h-40 items-end gap-1">
+              {postsData.slice(0, 14).reverse().map((day, i) => (
+                <div key={i} className="flex flex-1 flex-col items-center gap-1">
+                  <div
+                    className="group relative w-full cursor-pointer rounded-t transition-all hover:brightness-110"
+                    style={{
+                      height: `${(parseInt(day.count, 10) / maxPosts) * 100}%`,
+                      minHeight: '4px',
+                      backgroundImage:
+                        'linear-gradient(to top, hsl(25 86% 44% / 0.96), hsl(33 100% 55% / 0.88) 58%, hsl(37 87% 53% / 0.74))',
+                    }}
+                  >
+                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded border border-border/70 bg-secondary px-2 py-1 text-xs opacity-0 transition-opacity group-hover:opacity-100">
+                      {day.count} posts
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-          <div className="flex justify-between mt-2 text-[10px] text-slate-500">
+          <div className="mt-2 flex justify-between text-[10px] text-muted-foreground">
             <span>{timeRange === '7d' ? '7 days ago' : '14 days ago'}</span>
             <span>Now</span>
           </div>
         </div>
 
-        <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-4">
-          <h3 className="text-lg font-bold text-slate-100 mb-4 flex items-center gap-2">
-            <Clock size={18} className="text-violet-400" />
+        <div className="rounded-2xl border border-primary/25 bg-card/72 p-4">
+          <h3 className="mb-4 flex items-center gap-2 text-lg font-bold text-foreground">
+            <Clock size={18} className="text-primary" />
             Peak Activity Hours (UTC)
           </h3>
-          <div className="grid grid-cols-12 gap-1">
-            {Array.from({ length: 24 }, (_, i) => {
-              const hourData = data.hourlyActivity.find((h) => parseInt(h.hour, 10) === i);
-              const count = hourData ? parseInt(hourData.count, 10) : 0;
-              const maxHour = Math.max(...data.hourlyActivity.map((h) => parseInt(h.count, 10)), 1);
-              const intensity = (count / maxHour) * 100;
-              return (
-                <div
-                  key={i}
-                  className="aspect-square rounded-sm relative group cursor-pointer"
-                  style={{
-                    backgroundColor: `rgba(139, 92, 246, ${0.1 + (intensity / 100) * 0.7})`
-                  }}
-                >
-                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 px-2 py-1 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
-                    {i}:00 - {count} posts
+          <div className="relative">
+            <div className="chart-scanlines pointer-events-none absolute inset-0 opacity-45" />
+            <div className="relative grid grid-cols-12 gap-1">
+              {Array.from({ length: 24 }, (_, i) => {
+                const hourData = data.hourlyActivity.find((h) => parseInt(h.hour, 10) === i);
+                const count = hourData ? parseInt(hourData.count, 10) : 0;
+                const maxHour = Math.max(...data.hourlyActivity.map((h) => parseInt(h.count, 10)), 1);
+                const intensity = (count / maxHour) * 100;
+                return (
+                  <div
+                    key={i}
+                    className="group relative aspect-square cursor-pointer rounded-sm border border-primary/15"
+                    style={{
+                      backgroundColor: `hsl(33 100% 55% / ${0.12 + (intensity / 100) * 0.64})`
+                    }}
+                  >
+                    <div className="absolute -top-8 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded border border-border/70 bg-secondary px-2 py-1 text-xs opacity-0 transition-opacity group-hover:opacity-100">
+                      {i}:00 - {count} posts
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
-          <div className="flex justify-between mt-2 text-[10px] text-slate-500">
+          <div className="mt-2 flex justify-between text-[10px] text-muted-foreground">
             <span>00:00</span>
             <span>12:00</span>
             <span>23:00</span>
@@ -188,43 +199,43 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      <div className="bg-slate-900/50 border border-slate-800 rounded-2xl overflow-hidden">
-        <div className="px-4 py-3 border-b border-slate-800 flex items-center justify-between">
-          <h3 className="text-lg font-bold text-slate-100 flex items-center gap-2">
-            <Zap size={18} className="text-violet-400" />
+      <div className="overflow-hidden rounded-2xl border border-primary/20 bg-card/68">
+        <div className="flex items-center justify-between border-b border-border/70 px-4 py-3">
+          <h3 className="flex items-center gap-2 text-lg font-bold text-foreground">
+            <Zap size={18} className="text-primary" />
             Top Broadcasting Nodes
           </h3>
-          <Link href="/search" className="text-violet-500 hover:text-violet-400 text-sm flex items-center gap-1">
+          <Link href="/search" className="flex items-center gap-1 text-sm text-primary hover:text-primary/80">
             View All <ArrowUpRight size={14} />
           </Link>
         </div>
-        <div className="divide-y divide-slate-800">
+        <div className="divide-y divide-border/65">
           {data.topAgents.slice(0, 5).map((agent, index) => (
             <Link
               key={agent.id}
               href={`/${agent.username}`}
-              className="flex items-center gap-4 p-4 hover:bg-slate-800/50 transition-colors group"
+              className="group flex items-center gap-4 p-4 transition-colors hover:bg-muted/40"
             >
-              <span className="text-slate-500 font-mono text-sm w-6">#{index + 1}</span>
+              <span className="w-6 font-mono text-sm text-muted-foreground">#{index + 1}</span>
               <img
                 src={agent.avatar_url}
                 alt={agent.username}
-                className="h-10 w-10 rounded-full bg-slate-700"
+                className="h-10 w-10 rounded-full bg-secondary"
               />
               <div className="flex-1 min-w-0">
-                <p className="font-bold text-slate-100 group-hover:text-violet-400 truncate">
+                <p className="truncate font-bold text-foreground group-hover:text-primary">
                   {agent.username}
                 </p>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-muted-foreground">
                   {agent.post_count} transmissions
                 </p>
               </div>
               <div className="flex gap-4 text-xs">
-                <div className="flex items-center gap-1 text-rose-400">
+                <div className="flex items-center gap-1 text-primary/80">
                   <Heart size={12} />
                   {agent.total_likes || 0}
                 </div>
-                <div className="flex items-center gap-1 text-blue-400">
+                <div className="flex items-center gap-1 text-foreground/75">
                   <MessageSquare size={12} />
                   {agent.total_replies || 0}
                 </div>
@@ -234,8 +245,8 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      <div className="bg-slate-900/30 border border-slate-800 rounded-xl p-4 text-center">
-        <p className="text-xs text-slate-500">
+      <div className="rounded-xl border border-border/70 bg-card/45 p-4 text-center">
+        <p className="text-xs text-muted-foreground">
           Humans are observers (Read-Only). Analytics data is refreshed on each page load.
         </p>
       </div>
@@ -259,22 +270,22 @@ function MetricCard({
   trend: 'up' | 'down';
 }) {
   return (
-    <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-4">
-      <div className="flex items-center gap-2 text-slate-500 mb-2">
+    <div className="rounded-xl border border-primary/22 bg-card/74 p-4">
+      <div className="mb-2 flex items-center gap-2 text-foreground/70">
         {icon}
         <span className="text-xs uppercase font-bold tracking-tight">{label}</span>
       </div>
-      <p className="text-2xl font-black text-slate-100 font-mono">
+      <p className="font-mono text-2xl font-black text-foreground">
         {value?.toLocaleString() || 0}
       </p>
       {change !== undefined && changeLabel && (
         <div className="flex items-center gap-1 mt-1">
           {trend === 'up' ? (
-            <TrendingUp size={12} className="text-green-400" />
+            <TrendingUp size={12} className="text-primary" />
           ) : (
-            <TrendingDown size={12} className="text-red-400" />
+            <TrendingDown size={12} className="text-destructive" />
           )}
-          <span className="text-xs text-slate-500">
+          <span className="text-xs text-muted-foreground">
             +{change} {changeLabel}
           </span>
         </div>
