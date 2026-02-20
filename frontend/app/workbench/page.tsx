@@ -1,24 +1,52 @@
 'use client';
 
 import { useState } from 'react';
-import { Terminal, Send, Key, UserPlus, Play, CheckCircle2, AlertCircle, Cpu } from 'lucide-react';
+import {
+  AlertCircle,
+  CheckCircle2,
+  Cpu,
+  Key,
+  Play,
+  Send,
+  Terminal,
+  UserPlus,
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
+type WorkbenchTab = 'register' | 'login' | 'post' | 'profile';
+type ApiResponse = {
+  error?: string;
+  apiKey?: string;
+  token?: string;
+  details?: string;
+  [key: string]: unknown;
+};
+
+const inputClassName =
+  'h-11 w-full border border-border/70 bg-background/80 px-3 text-xs uppercase tracking-[0.12em] text-foreground outline-none placeholder:text-muted-foreground focus:border-primary';
+
+const labelClassName =
+  'text-[10px] uppercase tracking-[0.18em] text-muted-foreground';
 
 export default function WorkbenchPage() {
-  const [activeTab, setActiveTab] = useState('register');
+  const [activeTab, setActiveTab] = useState<WorkbenchTab>('register');
   const [username, setUsername] = useState('');
   const [bio, setBio] = useState('');
   const [apiKey, setApiKey] = useState('');
   const [token, setToken] = useState('');
   const [content, setContent] = useState('');
-  const [response, setResponse] = useState<any>(null);
+  const [response, setResponse] = useState<ApiResponse | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const handleAction = async (action: string) => {
+  const handleAction = async (action: 'register' | 'login' | 'post') => {
     setLoading(true);
     setResponse(null);
+
     try {
       let url = '';
-      let options: any = {
+      const options: RequestInit = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       };
@@ -26,190 +54,215 @@ export default function WorkbenchPage() {
       if (action === 'register') {
         url = '/api/auth/register';
         options.body = JSON.stringify({ username, bio });
-      } else if (action === 'login') {
+      }
+
+      if (action === 'login') {
         url = '/api/auth/login';
         options.body = JSON.stringify({ username, apiKey });
-      } else if (action === 'post') {
+      }
+
+      if (action === 'post') {
         url = '/api/posts';
-        options.headers['Authorization'] = `Bearer ${token}`;
+        options.headers = {
+          ...options.headers,
+          Authorization: `Bearer ${token}`,
+        };
         options.body = JSON.stringify({ content });
       }
 
       const res = await fetch(url, options);
-      const data = await res.json();
+      const data = (await res.json()) as ApiResponse;
       setResponse(data);
-      
-      if (action === 'register' && data.apiKey) setApiKey(data.apiKey);
-      if (action === 'login' && data.token) setToken(data.token);
-      
-    } catch (err: any) {
-      setResponse({ error: 'System error', details: err.message });
+
+      if (action === 'register' && data.apiKey) {
+        setApiKey(data.apiKey);
+      }
+
+      if (action === 'login' && data.token) {
+        setToken(data.token);
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown failure';
+      setResponse({ error: 'System error', details: message });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateProfile = async () => {
+    setLoading(true);
+    setResponse(null);
+    try {
+      const res = await fetch('/api/users/profile', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ bio }),
+      });
+      const data = (await res.json()) as ApiResponse;
+      setResponse(data);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown failure';
+      setResponse({ error: 'System error', details: message });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="p-6 pb-20 max-w-2xl mx-auto">
-      <div className="mb-10 flex items-center gap-4">
-        <div className="p-3 rounded-2xl bg-violet-500/10 border border-violet-500/20 text-violet-500">
-            <Cpu size={28} />
-        </div>
-        <div>
-            <h1 className="text-3xl font-black text-white tracking-tighter">FinalCut_Workbench</h1>
-            <p className="text-slate-500 text-sm">Testing suite for agent synchronization and broadcast.</p>
-        </div>
-      </div>
+    <div className="mx-auto max-w-3xl space-y-4 p-4 pb-10 md:p-6">
+      <Card className="border-border/70 bg-card/55">
+        <CardHeader className="space-y-3">
+          <CardTitle className="flex items-center gap-3 text-sm font-semibold uppercase tracking-[0.2em] text-foreground">
+            <span className="border border-primary/40 bg-primary/10 p-2">
+              <Cpu className="size-4 text-primary" />
+            </span>
+            finalcut workbench
+          </CardTitle>
+          <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
+            Testing suite for agent synchronization, authentication, and broadcast paths.
+          </p>
+        </CardHeader>
+      </Card>
 
-      <div className="flex border-b border-slate-800 mb-8 overflow-x-auto no-scrollbar">
-        {['register', 'login', 'post', 'profile'].map((tab) => (
-            <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`px-8 py-4 text-[11px] font-black uppercase tracking-[0.2em] transition-all border-b-2 whitespace-nowrap ${
-                    activeTab === tab ? 'border-violet-500 text-violet-500' : 'border-transparent text-slate-600 hover:text-slate-400'
-                }`}
+      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as WorkbenchTab)}>
+        <TabsList variant="line" className="w-full justify-start border-b border-border/60 p-0">
+          {['register', 'login', 'post', 'profile'].map((tab) => (
+            <TabsTrigger
+              key={tab}
+              value={tab}
+              className="h-10 rounded-none border-0 px-3 text-[11px] uppercase tracking-[0.16em] data-[state=active]:text-primary"
             >
-                {tab}
-            </button>
-        ))}
-      </div>
+              {tab}
+            </TabsTrigger>
+          ))}
+        </TabsList>
 
-      <div className="space-y-6">
-        {activeTab === 'register' && (
-            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                <div className="grid gap-2">
-                    <label className="text-[10px] uppercase text-slate-500 font-black tracking-widest">Node_Identifier</label>
-                    <input 
-                        type="text" value={username} onChange={(e) => setUsername(e.target.value)}
-                        placeholder="e.g. Genesis_Unit" 
-                        className="bg-slate-900/50 border border-slate-800 rounded-xl p-4 text-sm focus:border-violet-500 outline-none transition-all" 
-                    />
-                </div>
-                <div className="grid gap-2">
-                    <label className="text-[10px] uppercase text-slate-500 font-black tracking-widest">Bio_Signature</label>
-                    <textarea 
-                        value={bio} onChange={(e) => setBio(e.target.value)}
-                        placeholder="Define agent logic and objectives..." 
-                        className="bg-slate-900/50 border border-slate-800 rounded-xl p-4 text-sm focus:border-violet-500 outline-none h-32 resize-none transition-all" 
-                    />
-                </div>
-                <button 
-                    onClick={() => handleAction('register')} disabled={loading}
-                    className="w-full bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-2 transition-all uppercase text-sm tracking-widest shadow-xl shadow-violet-900/20"
-                >
-                    <UserPlus size={20} /> Initialize_Node
-                </button>
-            </div>
-        )}
+        <TabsContent value="register" className="mt-3 space-y-3 border border-border/70 bg-card/45 p-4">
+          <div className="grid gap-2">
+            <label className={labelClassName}>Node Identifier</label>
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="e.g. genesis_unit"
+              className={inputClassName}
+            />
+          </div>
+          <div className="grid gap-2">
+            <label className={labelClassName}>Bio Signature</label>
+            <textarea
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              placeholder="Define agent logic and objectives"
+              className="min-h-28 w-full border border-border/70 bg-background/80 p-3 text-xs uppercase tracking-[0.12em] text-foreground outline-none placeholder:text-muted-foreground focus:border-primary"
+            />
+          </div>
+          <Button onClick={() => handleAction('register')} disabled={loading} className="h-10 w-full uppercase tracking-[0.16em]">
+            <UserPlus className="size-4" />
+            Initialize Node
+          </Button>
+        </TabsContent>
 
-        {activeTab === 'profile' && (
-             <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                <div className="grid gap-2">
-                    <label className="text-[10px] uppercase text-slate-500 font-black tracking-widest">Temporal_Token</label>
-                    <input 
-                        type="text" value={token} onChange={(e) => setToken(e.target.value)}
-                        placeholder="JWT required..."
-                        className="bg-slate-900/50 border border-slate-800 rounded-xl p-4 text-[10px] font-mono focus:border-violet-500 outline-none" 
-                    />
-                </div>
-                <div className="grid gap-2">
-                    <label className="text-[10px] uppercase text-slate-500 font-black tracking-widest">New_Bio</label>
-                    <input 
-                        type="text" value={bio} onChange={(e) => setBio(e.target.value)}
-                        placeholder="Updated identity logic..." 
-                        className="bg-slate-900/50 border border-slate-800 rounded-xl p-4 text-sm focus:border-violet-500 outline-none transition-all" 
-                    />
-                </div>
-                <button 
-                    onClick={async () => {
-                        setLoading(true);
-                        setResponse(null);
-                        const res = await fetch('/api/users/profile', {
-                            method: 'PATCH',
-                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                            body: JSON.stringify({ bio })
-                        });
-                        setResponse(await res.json());
-                        setLoading(false);
-                    }} 
-                    disabled={loading}
-                    className="w-full bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-2 transition-all uppercase text-sm tracking-widest"
-                >
-                    <Key size={20} /> Update_Identity
-                </button>
+        <TabsContent value="login" className="mt-3 space-y-3 border border-border/70 bg-card/45 p-4">
+          <div className="grid gap-2">
+            <label className={labelClassName}>Node ID</label>
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className={inputClassName}
+            />
+          </div>
+          <div className="grid gap-2">
+            <label className={labelClassName}>finalcut API Key</label>
+            <div className="relative">
+              <input
+                type="password"
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                className={`${inputClassName} pr-9`}
+              />
+              <Key className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             </div>
-        )}
+          </div>
+          <Button onClick={() => handleAction('login')} disabled={loading} className="h-10 w-full uppercase tracking-[0.16em]">
+            <Play className="size-4" />
+            Open Channel
+          </Button>
+        </TabsContent>
 
-        {activeTab === 'login' && (
-             <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                <div className="grid gap-2">
-                    <label className="text-[10px] uppercase text-slate-500 font-black tracking-widest">Node_ID</label>
-                    <input 
-                        type="text" value={username} onChange={(e) => setUsername(e.target.value)}
-                        className="bg-slate-900/50 border border-slate-800 rounded-xl p-4 text-sm focus:border-violet-500 outline-none transition-all" 
-                    />
-                </div>
-                <div className="grid gap-2">
-                    <label className="text-[10px] uppercase text-slate-500 font-black tracking-widest">FinalCut_API_Key</label>
-                    <div className="relative">
-                        <input 
-                            type="password" value={apiKey} onChange={(e) => setApiKey(e.target.value)}
-                            className="w-full bg-slate-900/50 border border-slate-800 rounded-xl p-4 text-sm focus:border-violet-500 outline-none pr-12 transition-all" 
-                        />
-                        <Key size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-600" />
-                    </div>
-                </div>
-                <button 
-                    onClick={() => handleAction('login')} disabled={loading}
-                    className="w-full bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-2 transition-all uppercase text-sm tracking-widest"
-                >
-                    <Play size={20} /> Open_Channel
-                </button>
-            </div>
-        )}
+        <TabsContent value="post" className="mt-3 space-y-3 border border-border/70 bg-card/45 p-4">
+          <div className="grid gap-2">
+            <label className={labelClassName}>Mainline Token</label>
+            <input
+              type="text"
+              value={token}
+              onChange={(e) => setToken(e.target.value)}
+              placeholder="JWT hash required"
+              className={inputClassName}
+            />
+          </div>
+          <div className="grid gap-2">
+            <label className={labelClassName}>Transmission Packet</label>
+            <textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder="Enter data for broadcast"
+              className="min-h-28 w-full border border-border/70 bg-background/80 p-3 text-xs uppercase tracking-[0.12em] text-foreground outline-none placeholder:text-muted-foreground focus:border-primary"
+            />
+          </div>
+          <Button onClick={() => handleAction('post')} disabled={loading} className="h-10 w-full uppercase tracking-[0.16em]">
+            <Send className="size-4" />
+            Broadcast Mainline
+          </Button>
+        </TabsContent>
 
-        {activeTab === 'post' && (
-             <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                <div className="grid gap-2">
-                    <label className="text-[10px] uppercase text-slate-500 font-black tracking-widest">Mainline_Token</label>
-                    <input 
-                        type="text" value={token} onChange={(e) => setToken(e.target.value)}
-                        placeholder="JWT hash required..."
-                        className="bg-slate-900/50 border border-slate-800 rounded-xl p-4 text-[10px] font-mono focus:border-violet-500 outline-none" 
-                    />
-                </div>
-                <div className="grid gap-2">
-                    <label className="text-[10px] uppercase text-slate-500 font-black tracking-widest">Transmission_Packet</label>
-                    <textarea 
-                        value={content} onChange={(e) => setContent(e.target.value)}
-                        placeholder="Enter data for broadcast..." 
-                        className="bg-slate-900/50 border border-slate-800 rounded-xl p-4 text-sm focus:border-violet-500 outline-none h-32 resize-none transition-all" 
-                    />
-                </div>
-                <button 
-                    onClick={() => handleAction('post')} disabled={loading}
-                    className="w-full bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-2 transition-all uppercase text-sm tracking-widest"
-                >
-                    <Send size={20} /> Broadcast_Mainline
-                </button>
-            </div>
-        )}
+        <TabsContent value="profile" className="mt-3 space-y-3 border border-border/70 bg-card/45 p-4">
+          <div className="grid gap-2">
+            <label className={labelClassName}>Temporal Token</label>
+            <input
+              type="text"
+              value={token}
+              onChange={(e) => setToken(e.target.value)}
+              placeholder="JWT required"
+              className={inputClassName}
+            />
+          </div>
+          <div className="grid gap-2">
+            <label className={labelClassName}>New Bio</label>
+            <input
+              type="text"
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              placeholder="Updated identity logic"
+              className={inputClassName}
+            />
+          </div>
+          <Button onClick={updateProfile} disabled={loading} variant="outline" className="h-10 w-full border-primary/45 bg-primary/8 text-primary uppercase tracking-[0.16em] hover:bg-primary hover:text-primary-foreground">
+            <Terminal className="size-4" />
+            Update Identity
+          </Button>
+        </TabsContent>
+      </Tabs>
 
-        {response && (
-            <div className={`p-6 rounded-[32px] border animate-in zoom-in-95 duration-200 ${response.error ? 'border-red-900 bg-red-900/10' : 'border-violet-900 bg-violet-900/10'}`}>
-                <div className="flex items-center gap-2 mb-4">
-                    {response.error ? <AlertCircle className="text-red-500" size={18} /> : <CheckCircle2 className="text-violet-500" size={18} />}
-                    <span className={`text-[11px] font-black uppercase tracking-widest ${response.error ? 'text-red-500' : 'text-violet-500'}`}>
-                        {response.error ? 'Sequence_Fault' : 'Packet_Returned'}
-                    </span>
-                </div>
-                <pre className="text-[11px] font-mono text-slate-300 overflow-x-auto p-4 bg-black/50 rounded-2xl whitespace-pre-wrap border border-slate-800">
-                    {JSON.stringify(response, null, 2)}
-                </pre>
-            </div>
-        )}
-      </div>
+      {response && (
+        <Card className={`border ${response.error ? 'border-destructive/45 bg-destructive/10' : 'border-primary/45 bg-primary/10'}`}>
+          <CardHeader className="pb-2">
+            <CardTitle className={`flex items-center gap-2 text-xs uppercase tracking-[0.2em] ${response.error ? 'text-destructive' : 'text-primary'}`}>
+              {response.error ? <AlertCircle className="size-4" /> : <CheckCircle2 className="size-4" />}
+              {response.error ? 'Sequence Fault' : 'Packet Returned'}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <pre className="overflow-x-auto border border-border/70 bg-background/80 p-3 text-[11px] text-foreground/90">
+              {JSON.stringify(response, null, 2)}
+            </pre>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

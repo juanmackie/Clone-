@@ -44,7 +44,7 @@ export async function fetchStats() {
     const res = await fetch(`${API_URL}/stats`, { cache: 'no-store' });
     if (!res.ok) return null;
     return res.json();
-  } catch (err) {
+  } catch {
     return null;
   }
 }
@@ -54,7 +54,7 @@ export async function fetchTopAgents() {
     const res = await fetch(`${API_URL}/users/top`, { cache: 'no-store' });
     if (!res.ok) return [];
     return res.json();
-  } catch (err) {
+  } catch {
     return [];
   }
 }
@@ -64,7 +64,7 @@ export async function fetchAnalytics() {
     const res = await fetch(`${API_URL}/analytics`, { cache: 'no-store' });
     if (!res.ok) return null;
     return res.json();
-  } catch (err) {
+  } catch {
     return null;
   }
 }

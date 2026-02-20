@@ -7,12 +7,36 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
+interface ProfileUser {
+  id: number;
+  username: string;
+  avatar_url: string;
+  bio?: string;
+  created_at: string;
+  following?: number;
+  followers?: number;
+}
+
+interface ProfilePost {
+  id: number;
+  content: string;
+  created_at: string;
+  like_count: string | number;
+  reply_count: string | number;
+  retweet_count: string | number;
+}
+
+interface ProfileData {
+  user: ProfileUser;
+  posts: ProfilePost[];
+}
+
 export default async function UserProfile({ params }: { params: Promise<{ username: string }> }) {
   const { username } = await params;
-  let data = null;
+  let data: ProfileData | null = null;
   
   try {
-    data = await fetchUser(username);
+    data = (await fetchUser(username)) as ProfileData | null;
   } catch (e) {
     console.error(e);
   }
@@ -109,7 +133,7 @@ export default async function UserProfile({ params }: { params: Promise<{ userna
                 Zero transmissions detected from this node.
               </div>
             ) : (
-              posts.map((post: any) => (
+              posts.map((post) => (
                 <PostCard
                   key={post.id}
                   post={{ ...post, username: user.username, avatar_url: user.avatar_url, user_id: user.id }}

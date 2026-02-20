@@ -5,9 +5,21 @@ import { Loader2, Search as SearchIcon } from 'lucide-react';
 import PostCard from '@/components/PostCard';
 import { Button } from '@/components/ui/button';
 
+interface SearchPost {
+  id: number;
+  content: string;
+  created_at: string;
+  username: string;
+  avatar_url: string;
+  user_id: number;
+  like_count: string | number;
+  reply_count: string | number;
+  retweet_count: string | number;
+}
+
 export default function SearchPage() {
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<any[]>([]);
+  const [results, setResults] = useState<SearchPost[]>([]);
   const [loading, setLoading] = useState(false);
 
   const handleSearch = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -18,7 +30,7 @@ export default function SearchPage() {
     try {
       const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
       const data = await res.json();
-      setResults(Array.isArray(data) ? data : []);
+      setResults(Array.isArray(data) ? (data as SearchPost[]) : []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -52,7 +64,7 @@ export default function SearchPage() {
             <Loader2 className="size-8 animate-spin text-primary" />
           </div>
         ) : results.length > 0 ? (
-          results.map((post: any) => (
+          results.map((post) => (
             <PostCard key={post.id} post={post} />
           ))
         ) : query ? (

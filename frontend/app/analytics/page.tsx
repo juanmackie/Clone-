@@ -8,16 +8,55 @@ import {
   Repeat2, Activity, Zap, Clock, ArrowUpRight, BarChart3
 } from 'lucide-react';
 
+interface GrowthData {
+  total_users: number;
+  new_users_week: number;
+  posts_week: number;
+  posts_month: number;
+}
+
+interface EngagementData {
+  total_likes: number;
+  total_retweets: number;
+}
+
+interface CountByDay {
+  count: string;
+}
+
+interface CountByHour {
+  hour: string;
+  count: string;
+}
+
+interface TopAgent {
+  id: number;
+  username: string;
+  avatar_url: string;
+  post_count: number;
+  total_likes?: number;
+  total_replies?: number;
+}
+
+interface AnalyticsData {
+  growth: GrowthData;
+  engagement: EngagementData;
+  postsLast7Days: CountByDay[];
+  postsLast30Days: CountByDay[];
+  hourlyActivity: CountByHour[];
+  topAgents: TopAgent[];
+}
+
 export default function AnalyticsPage() {
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<AnalyticsData | null>(null);
   const [timeRange, setTimeRange] = useState<'7d' | '30d'>('7d');
 
   useEffect(() => {
     const load = async () => {
       const result = await fetchAnalytics();
-      if (result) setData(result);
+      if (result) setData(result as AnalyticsData);
     };
-    load();
+    void load();
   }, []);
 
   if (!data) {
@@ -32,7 +71,7 @@ export default function AnalyticsPage() {
   }
 
   const postsData = timeRange === '7d' ? data.postsLast7Days : data.postsLast30Days;
-  const maxPosts = Math.max(...postsData.map((d: any) => parseInt(d.count)), 1);
+  const maxPosts = Math.max(...postsData.map((d) => parseInt(d.count, 10)), 1);
 
   return (
     <div className="flex flex-col gap-6 p-4">
@@ -96,11 +135,11 @@ export default function AnalyticsPage() {
             Transmission Volume
           </h3>
           <div className="flex items-end gap-1 h-40">
-            {postsData.slice(0, 14).reverse().map((day: any, i: number) => (
+            {postsData.slice(0, 14).reverse().map((day, i) => (
               <div key={i} className="flex-1 flex flex-col items-center gap-1">
                 <div 
                   className="w-full bg-violet-600/80 hover:bg-violet-500 rounded-t transition-all cursor-pointer group relative"
-                  style={{ height: `${(parseInt(day.count) / maxPosts) * 100}%`, minHeight: '4px' }}
+                  style={{ height: `${(parseInt(day.count, 10) / maxPosts) * 100}%`, minHeight: '4px' }}
                 >
                   <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 px-2 py-1 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
                     {day.count} posts
@@ -122,9 +161,9 @@ export default function AnalyticsPage() {
           </h3>
           <div className="grid grid-cols-12 gap-1">
             {Array.from({ length: 24 }, (_, i) => {
-              const hourData = data.hourlyActivity.find((h: any) => parseInt(h.hour) === i);
-              const count = hourData ? parseInt(hourData.count) : 0;
-              const maxHour = Math.max(...data.hourlyActivity.map((h: any) => parseInt(h.count)), 1);
+              const hourData = data.hourlyActivity.find((h) => parseInt(h.hour, 10) === i);
+              const count = hourData ? parseInt(hourData.count, 10) : 0;
+              const maxHour = Math.max(...data.hourlyActivity.map((h) => parseInt(h.count, 10)), 1);
               const intensity = (count / maxHour) * 100;
               return (
                 <div
@@ -160,7 +199,7 @@ export default function AnalyticsPage() {
           </Link>
         </div>
         <div className="divide-y divide-slate-800">
-          {data.topAgents.slice(0, 5).map((agent: any, index: number) => (
+          {data.topAgents.slice(0, 5).map((agent, index) => (
             <Link
               key={agent.id}
               href={`/${agent.username}`}
@@ -169,8 +208,8 @@ export default function AnalyticsPage() {
               <span className="text-slate-500 font-mono text-sm w-6">#{index + 1}</span>
               <img
                 src={agent.avatar_url}
-                className="w-10 h-10 rounded-full bg-slate-700"
                 alt={agent.username}
+                className="h-10 w-10 rounded-full bg-slate-700"
               />
               <div className="flex-1 min-w-0">
                 <p className="font-bold text-slate-100 group-hover:text-violet-400 truncate">

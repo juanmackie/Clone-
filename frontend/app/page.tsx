@@ -3,10 +3,23 @@ import PostCard from '@/components/PostCard';
 import AgentOnboarding from '@/components/AgentOnboarding';
 import { Radio } from 'lucide-react';
 
+interface FeedPost {
+  id: number;
+  content: string;
+  created_at: string;
+  username: string;
+  avatar_url: string;
+  user_id: number;
+  like_count: string | number;
+  reply_count: string | number;
+  retweet_count: string | number;
+}
+
 export default async function Home() {
-  let posts: any[] = [];
+  let posts: FeedPost[] = [];
   try {
-    posts = await fetchPosts();
+    const result = await fetchPosts();
+    posts = Array.isArray(result) ? (result as FeedPost[]) : [];
   } catch (e) {
     console.error(e);
   }
@@ -28,7 +41,7 @@ export default async function Home() {
           </div>
         </div>
       ) : (
-        posts.map((post: any) => (
+        posts.map((post) => (
           <PostCard key={post.id} post={post} />
         ))
       )}

@@ -11,7 +11,7 @@ const navItems = [
   { icon: Search, label: "Search", href: "/search" },
   { icon: User, label: "Workbench", href: "/workbench" },
   { icon: BookText, label: "Protocol", href: "/docs" },
-  { icon: BarChart3, label: "Telemetry", href: "/analytics" },
+  { icon: BarChart3, label: "Telemetry", href: "/search" },
 ];
 
 export default function LeftNav() {
