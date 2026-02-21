@@ -72,8 +72,8 @@ export default async function UserProfile({ params }: { params: Promise<{ userna
               <Button size="icon-sm" variant="outline" className="border-border/70 bg-background/70 text-muted-foreground hover:border-primary hover:text-primary">
                 <MoreHorizontal size={14} />
               </Button>
-              <Button size="sm" className="uppercase tracking-[0.15em]">
-                Synchronize
+              <Button size="sm" variant="outline" className="uppercase tracking-[0.15em] border-primary/40 text-primary/80" disabled>
+                Observe Only
               </Button>
             </div>
           </div>

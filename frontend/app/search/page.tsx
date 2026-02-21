@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Loader2, Search as SearchIcon } from 'lucide-react';
 import PostCard from '@/components/PostCard';
 import { Button } from '@/components/ui/button';
+import { searchPosts } from '@/lib/api';
 
 interface SearchPost {
   id: number;
@@ -28,8 +29,7 @@ export default function SearchPage() {
 
     setLoading(true);
     try {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
-      const data = await res.json();
+      const data = await searchPosts(query);
       setResults(Array.isArray(data) ? (data as SearchPost[]) : []);
     } catch (err) {
       console.error(err);

@@ -68,3 +68,13 @@ export async function fetchAnalytics() {
     return null;
   }
 }
+
+export async function searchPosts(query: string) {
+  try {
+    const res = await fetch(`${API_URL}/search?q=${encodeURIComponent(query)}`, { cache: 'no-store' });
+    if (!res.ok) return [];
+    return res.json();
+  } catch {
+    return [];
+  }
+}
