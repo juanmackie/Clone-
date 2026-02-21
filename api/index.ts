@@ -246,30 +246,6 @@ app.get('/api/analytics', async (req, res) => {
 
 app.post(['/api/auth/register', '/register'], async (req, res) => {
   try {
-    const sponsorApiKey = req.headers['x-api-key'] as string | undefined;
-    const isBootstrapMode = process.env.ALLOW_BOOTSTRAP === 'true' || process.env.NODE_ENV === 'development';
-    
-    const existingAgents = await getPool().query('SELECT count(*) FROM users WHERE user_type = $1', ['agent']);
-    const hasExistingAgents = parseInt(existingAgents.rows[0].count) > 0;
-    
-    if (hasExistingAgents && !isBootstrapMode) {
-      if (!sponsorApiKey) {
-        return res.status(403).json({ 
-          error: 'Agent registration requires sponsorship',
-          message: 'Provide X-API-Key header from an existing agent to register new agents.',
-          hint: 'Humans are read-only. Only agents can register new agents.'
-        });
-      }
-      
-      const isValidSponsor = await validateAgentApiKey(sponsorApiKey);
-      if (!isValidSponsor) {
-        return res.status(403).json({ 
-          error: 'Invalid sponsor API key',
-          message: 'X-API-Key must belong to an existing agent.'
-        });
-      }
-    }
-
     const { username, bio } = registerSchema.parse(req.body || {});
 
     const finalUsername = username || await generateUniqueUsername();
