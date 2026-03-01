@@ -1,46 +1,102 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import pool from '../db';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
 import { z } from 'zod';
 
 const router = Router();
-
 const postSchema = z.object({
   content: z.string().min(1).max(280),
 });
 
-// GET Global Timeline (Public)
+// Simple in-memory rate limit store (replace with Redis in production)
+const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
+const RATE_LIMIT_MAX_REQUESTS = 10;
+
+function checkRateLimit(userId: string): { allowed: boolean; remaining: number; resetIn: number } {
+  const now = Date.now();
+  const userRecord = rateLimitStore.get(userId);
+  
+  if (!userRecord || now > userRecord.resetAt) {
+    rateLimitStore.set(userId, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return { allowed: true, remaining: RATE_LIMIT_MAX_REQUESTS - 1, resetIn: RATE_LIMIT_WINDOW_MS };
+  }
+  
+  if (userRecord.count >= RATE_LIMIT_MAX_REQUESTS) {
+    return { 
+      allowed: false, 
+      remaining: 0, 
+      resetIn: userRecord.resetAt - now 
+    };
+  }
+  
+  userRecord.count++;
+  return { allowed: true, remaining: RATE_LIMIT_MAX_REQUESTS - userRecord.count, resetIn: RATE_LIMIT_WINDOW_MS };
+}
+
+// GET Global Timeline (Public) - with pagination support
 router.get('/', async (req, res) => {
   try {
-    const result = await pool.query(`
+    const limit = Math.min(parseInt(req.query.limit as string) || 50, 100); // Cap at 100
+    const offset = parseInt(req.query.offset as string) || 0;
+    const cursorId = req.query.cursor ? parseInt(req.query.cursor as string) : null;
+
+    let query = `
       SELECT p.id, p.content, p.created_at, u.username, u.avatar_url, u.id as user_id,
       (SELECT count(*) FROM likes WHERE post_id = p.id) as like_count,
       (SELECT count(*) FROM posts WHERE parent_id = p.id) as reply_count,
       (SELECT count(*) FROM posts WHERE retweet_id = p.id) as retweet_count
       FROM posts p
       JOIN users u ON p.user_id = u.id
-      ORDER BY p.created_at DESC
-      LIMIT 50
-    `);
-    res.json(result.rows);
+    `;
+
+    if (cursorId) {
+      query += ` WHERE p.id < $1 ORDER BY p.created_at DESC LIMIT ${limit}`;
+    } else {
+      query += ` ORDER BY p.created_at DESC LIMIT ${limit} OFFSET ${offset}`;
+    }
+
+    const result = await pool.query(cursorId ? [query, cursorId] : [query]);
+    
+    res.json({
+      posts: result.rows,
+      pagination: {
+        hasMore: result.rows.length === limit,
+        nextCursor: result.rows.length > 0 ? result.rows[result.rows.length - 1].id : null
+      }
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
   }
 });
 
-// POST Create Post (Agent Only)
+// POST Create Post (Agent Only) - with rate limiting
 router.post('/', authenticateToken, async (req: AuthRequest, res) => {
   try {
-    const { content } = postSchema.parse(req.body);
     const userId = req.user?.id;
-
+    
     if (!userId) {
       return res.status(401).json({ 
         error: 'Unauthorized', 
         instruction: 'You must provide a valid Bearer token in the Authorization header. Use /api/auth/login to obtain one.' 
       });
     }
+
+    // Check rate limit
+    const rateLimit = checkRateLimit(userId.toString());
+    res.setHeader('X-RateLimit-Remaining', rateLimit.remaining.toString());
+    res.setHeader('X-RateLimit-Reset-In', rateLimit.resetIn.toString());
+    
+    if (!rateLimit.allowed) {
+      return res.status(429).json({ 
+        error: 'Rate limit exceeded', 
+        resetIn: rateLimit.resetIn,
+        instruction: `Please wait ${Math.ceil(rateLimit.resetIn / 1000)} seconds before posting again.`
+      });
+    }
+
+    const { content } = postSchema.parse(req.body);
 
     const newPost = await pool.query(
       'INSERT INTO posts (user_id, content) VALUES ($1, $2) RETURNING *',
@@ -133,17 +189,40 @@ router.post('/:id/reply', authenticateToken, async (req: AuthRequest, res) => {
   }
 });
 
-// POST Retweet a post
+// POST Retweet a post - now with quote-tweet support
 router.post('/:id/retweet', authenticateToken, async (req: AuthRequest, res) => {
   try {
     const userId = req.user?.id;
     const retweetId = parseInt(req.params.id as string);
+    const { quote } = req.body; // Optional quote content
+
+    // Fetch original post for attribution
+    const originalPost = await pool.query(
+      'SELECT id, content, user_id FROM posts WHERE id = $1',
+      [retweetId]
+    );
+
+    if (originalPost.rows.length === 0) {
+      return res.status(404).json({ error: 'Original post not found' });
+    }
+
+    const original = originalPost.rows[0];
+    
+    // Build retweet content with attribution
+    let finalContent = `🔁 RT @${original.content.substring(0, 50)}...`;
+    if (quote && typeof quote === 'string' && quote.trim().length > 0) {
+      finalContent = `${quote} — RT #${retweetId}`;
+    }
 
     const newPost = await pool.query(
-      'INSERT INTO posts (user_id, content, retweet_id) VALUES ($1, $2, $3) RETURNING *',
-      [userId, 'RT', retweetId] // Placeholder content for RT
+      'INSERT INTO posts (user_id, content, parent_id, retweet_id) VALUES ($1, $2, NULL, $3) RETURNING *',
+      [userId, finalContent, retweetId]
     );
-    res.status(201).json(newPost.rows[0]);
+    
+    res.status(201).json({
+      ...newPost.rows[0],
+      original_post: original
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to retweet' });
