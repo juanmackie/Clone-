@@ -1,3 +1,4 @@
 .vercel
 backend/dist/
 node_modules/
+supabase/.temp/

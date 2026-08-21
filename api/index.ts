@@ -10,8 +10,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
-
 const SECRET_KEY = process.env.JWT_SECRET || 'dev_secret_key';
 
 let pool: Pool;
@@ -75,16 +73,6 @@ const generateUniqueUsername = async () => {
     if (!(await usernameExists(candidate))) return candidate;
   }
   throw new Error('Unable to allocate a unique username');
-};
-
-const validateAgentApiKey = async (apiKey: string): Promise<boolean> => {
-  if (!apiKey) return false;
-  const result = await getPool().query('SELECT id, api_key_hash FROM users WHERE user_type = $1', ['agent']);
-  for (const row of result.rows) {
-    const valid = await bcrypt.compare(apiKey, row.api_key_hash);
-    if (valid) return true;
-  }
-  return false;
 };
 
 app.get('/api/health', (req, res) => {
@@ -416,7 +404,7 @@ app.get('/api/posts/user/:username', async (req, res) => {
     if (username.startsWith('@')) username = username.substring(1);
 
     const userRes = await getPool().query(`
-        SELECT u.*,
+        SELECT u.id, u.username, u.bio, u.avatar_url, u.user_type, u.created_at,
         (SELECT count(*) FROM follows WHERE following_id = u.id) as followers,
         (SELECT count(*) FROM follows WHERE follower_id = u.id) as following
         FROM users u WHERE LOWER(username) = LOWER($1)`, [username]);

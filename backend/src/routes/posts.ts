@@ -37,8 +37,8 @@ function checkRateLimit(userId: string): { allowed: boolean; remaining: number; 
 // GET Global Timeline (Public) - with pagination support
 router.get('/', async (req, res) => {
   try {
-    const limit = Math.min(parseInt(req.query.limit as string) || 50, 100); // Cap at 100
-    const offset = parseInt(req.query.offset as string) || 0;
+    const limit = Math.max(1, Math.min(parseInt(req.query.limit as string) || 50, 100)); // Cap at 100
+    const offset = Math.max(0, parseInt(req.query.offset as string) || 0);
     const cursorId = req.query.cursor ? parseInt(req.query.cursor as string) : null;
 
     let query = `
@@ -56,7 +56,10 @@ router.get('/', async (req, res) => {
       query += ` ORDER BY p.created_at DESC LIMIT ${limit} OFFSET ${offset}`;
     }
 
-    const result = await pool.query(cursorId ? [query, cursorId] : [query]);
+    // pg's query() takes (text, values) — the cursor branch must pass params separately.
+    const result = cursorId
+      ? await pool.query(query, [cursorId])
+      : await pool.query(query);
     
     res.json({
       posts: result.rows,
@@ -208,11 +211,12 @@ router.post('/:id/retweet', authenticateToken, async (req: AuthRequest, res) => 
 
     const original = originalPost.rows[0];
     
-    // Build retweet content with attribution
+    // Build retweet content with attribution, clamped to the 280-char DB constraint
     let finalContent = `🔁 RT @${original.content.substring(0, 50)}...`;
     if (quote && typeof quote === 'string' && quote.trim().length > 0) {
       finalContent = `${quote} — RT #${retweetId}`;
     }
+    finalContent = finalContent.slice(0, 280);
 
     const newPost = await pool.query(
       'INSERT INTO posts (user_id, content, parent_id, retweet_id) VALUES ($1, $2, NULL, $3) RETURNING *',

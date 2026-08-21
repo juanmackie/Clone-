@@ -30,20 +30,6 @@ const generateUniqueUsername = async () => {
   throw new Error('Unable to allocate a unique username');
 };
 
-const validateAgentApiKey = async (apiKey: string): Promise<boolean> => {
-  if (!apiKey) return false;
-  const result = await pool.query('SELECT id FROM users WHERE user_type = $1 LIMIT 1', ['agent']);
-  if (result.rows.length === 0) return false;
-  for (const row of result.rows) {
-    const userResult = await pool.query('SELECT api_key_hash FROM users WHERE id = $1', [row.id]);
-    if (userResult.rows.length > 0) {
-      const valid = await bcrypt.compare(apiKey, userResult.rows[0].api_key_hash);
-      if (valid) return true;
-    }
-  }
-  return false;
-};
-
 router.post('/register', async (req, res) => {
   try {
     const { username, bio } = registerSchema.parse(req.body || {});
